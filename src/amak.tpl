@@ -3074,7 +3074,7 @@ FUNCTION dvariable SRecruit(const double& Stmp)
   RETURN_ARRAYS_DECREMENT();
   return RecTmp;
 
-FUNCTION dvariable SRecruit(_CONST dvariable& Stmp)
+FUNCTION dvariable SRecruit(const dvariable& Stmp)
   RETURN_ARRAYS_INCREMENT();
   dvariable RecTmp;
   switch (SrType)
@@ -3648,7 +3648,7 @@ FUNCTION write_projout
 FINAL_SECTION
   /** Final section to compute projection input and profiles (over F) */
   // Calc_Dependent_Vars();
-  write_proj();
+  // write_proj();
   write_projout();
   // write_msy_out();
   Profile_F();
@@ -5118,7 +5118,7 @@ FUNCTION Write_R
   R_report.close();
 
 
-FUNCTION double mn_age(_CONST dvector& pobs)
+FUNCTION double mn_age(const dvector& pobs)
   // int lb1 = pobs.indexmin();
   // int ub1 = pobs.indexmax();
   // dvector av = age_vector(lb1,ub1)  ;
@@ -5126,7 +5126,7 @@ FUNCTION double mn_age(_CONST dvector& pobs)
   double mobs = (pobs*age_vector);
   return mobs;
 
-FUNCTION double mn_age(_CONST dvar_vector& pobs)
+FUNCTION double mn_age(const dvar_vector& pobs)
   // int lb1 = pobs.indexmin();
   // int ub1 = pobs.indexmax();
   // dvector av = age_vector(lb1,ub1)  ;
@@ -5134,27 +5134,27 @@ FUNCTION double mn_age(_CONST dvar_vector& pobs)
   double mobs = value(pobs*age_vector);
   return mobs;
 
-FUNCTION double Sd_age(_CONST dvector& pobs)
+FUNCTION double Sd_age(const dvector& pobs)
   // double mobs = (pobs.shift(rec_age)*age_vector);
   // double stmp = (sqrt(elem_prod(age_vector,age_vector)*pobs.shift(rec_age) - mobs*mobs));
   double mobs = (pobs*age_vector);
   double stmp = sqrt((elem_prod(age_vector,age_vector)*pobs) - mobs*mobs);
   return stmp;
 
-FUNCTION double mn_length(_CONST dvector& pobs)
+FUNCTION double mn_length(const dvector& pobs)
   double mobs = (pobs*len_bins);
   return mobs;
 
-FUNCTION double mn_length(_CONST dvar_vector& pobs)
+FUNCTION double mn_length(const dvar_vector& pobs)
   double mobs = value(pobs*len_bins);
   return mobs;
 
-FUNCTION double Sd_length(_CONST dvector& pobs)
+FUNCTION double Sd_length(const dvector& pobs)
   double mobs = (pobs*len_bins);
   double stmp = sqrt((elem_prod(len_bins,len_bins)*pobs) - mobs*mobs);
   return stmp;
 
-FUNCTION double Eff_N_adj(_CONST double, _CONST dvar_vector& pobs, _CONST dvar_vector& phat)
+FUNCTION double Eff_N_adj(const double, const dvar_vector& pobs, const dvar_vector& phat)
   int lb1 = pobs.indexmin();
   int ub1 = pobs.indexmax();
   dvector av = age_vector(lb1,ub1)  ;
@@ -5164,7 +5164,7 @@ FUNCTION double Eff_N_adj(_CONST double, _CONST dvar_vector& pobs, _CONST dvar_v
   double stmp = value(sqrt(elem_prod(av,av)*pobs - mobs*mobs));
   return square(stmp)/square(rtmp);
 
-FUNCTION double Eff_N2(_CONST dvector& pobs, _CONST dvar_vector& phat)
+FUNCTION double Eff_N2(const dvector& pobs, const dvar_vector& phat)
   int lb1 = pobs.indexmin();
   int ub1 = pobs.indexmax();
   dvector av = age_vector(lb1,ub1)  ;
@@ -5174,13 +5174,13 @@ FUNCTION double Eff_N2(_CONST dvector& pobs, _CONST dvar_vector& phat)
   double stmp = (sqrt(elem_prod(av,av)*pobs - mobs*mobs));
   return square(stmp)/square(rtmp);
 
-FUNCTION double Eff_N(_CONST dvector& pobs, _CONST dvar_vector& phat)
+FUNCTION double Eff_N(const dvector& pobs, const dvar_vector& phat)
   dvar_vector rtmp = elem_div((pobs-phat),sqrt(elem_prod(phat,(1-phat))));
   double vtmp;
   vtmp = value(norm2(rtmp)/size_count(rtmp));
   return 1./vtmp;
 
-FUNCTION double Eff_N2_L(_CONST dvector& pobs, _CONST dvar_vector& phat)
+FUNCTION double Eff_N2_L(const dvector& pobs, const dvar_vector& phat)
   dvector av = len_bins  ;
   double mobs =      (pobs*av);
   double mhat = value(phat*av );
@@ -5188,7 +5188,7 @@ FUNCTION double Eff_N2_L(_CONST dvector& pobs, _CONST dvar_vector& phat)
   double stmp = (sqrt(elem_prod(av,av)*pobs - mobs*mobs));
   return square(stmp)/square(rtmp);
 
-FUNCTION double get_AC(_CONST int& indind)
+FUNCTION double get_AC(const int& indind)
   // Functions to compute autocorrelation in residuals 
   int i1,i2,iyr;
   i1 = 1;
@@ -5224,7 +5224,6 @@ GLOBALS_SECTION
   /// for R report 
 	#define R_Report(object) R_report << "$"#object "\n" << object << endl;
 	/** Prints name and value of \a object on ADMB report %ofstream file.  */
-	#def log_input(object)
 	#undef log_input
 	#define log_input(object) write_input_log << "# " #object "\n" << object << endl;
 	#undef log_param
