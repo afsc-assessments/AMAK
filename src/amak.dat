@@ -98,11 +98,11 @@ Model_2
 0.4  
 # Years of selectivity change survey 
 # nyrs fish selectivity changes
-0
+2
 # Yrs fish selectivity changes
-#1995 2000
+1995 2000
 # sigm fish selectivity changes
-#0.7 0.7
+0.7 0.7
 # Initial values for coefficitients at each change (one for every change plus 1) 
 # 2 3 4 5 6 7 8 9 10 11 12  
 0.2 0.7 1 1 1 1 1 1 1 1 1 
