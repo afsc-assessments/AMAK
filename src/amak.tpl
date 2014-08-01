@@ -55,7 +55,7 @@
 //////////////////////////////////////////////////////////////////////////////
 
 DATA_SECTION
-  !!version_info+="SPRFMO_Jack_Mackerel;August_2013";
+  !!version_info+="AMAK;August_2013";
   int iseed 
   !! iseed=1313;
   int cmp_no // candidate management procedure
@@ -1512,7 +1512,7 @@ FUNCTION write_mceval
   Calc_Dependent_Vars();
   mceval<<
   q_ind(1,1)  << " "<< 
-  M         << " "<< 
+  M(endyr,1)    << " "<< 
   steepness << " "<< 
   depletion << " "<< 
   MSY       << " "<< 
@@ -1525,7 +1525,12 @@ FUNCTION write_mceval
   F35       << " "<<
   F40       << " "<<
   F50       << " "<<
-  SSB_fut(1,endyr_fut) << " "<< 
+  SSB_fut(1,styr_fut) << " "<< 
+  sel_fsh(1,endyr-2)<< " "<<
+  sel_fsh(1,endyr-7)<< " "<<
+  sel_fsh(1,endyr-12)<< " "<<
+  endl;
+  /*
   SSB_fut(2,endyr_fut) << " "<< 
   SSB_fut(3,endyr_fut) << " "<< 
   SSB_fut(4,endyr_fut) << " "<< 
@@ -1534,6 +1539,7 @@ FUNCTION write_mceval
   catch_future(2,styr_fut)    << " "<<  
   catch_future(3,styr_fut)    << " "<<  
   catch_future(4,styr_fut)    << " "<<  endl;
+  */
 
 //-----TRANSFORMATION FUNCION AGE->LENGTH--------------------------------------------------
 FUNCTION Get_Age2length
@@ -1955,7 +1961,6 @@ FUNCTION Get_Survey_Predictions
       tmp_n        = elem_prod(pow(S(iyr),ind_month_frac(k)),elem_prod(sel_ind(k,iyr),natage(iyr)));  
       sum_tmp      = sum(tmp_n);
       tmp_n       /= sum_tmp;
-      // cout <<tmp_n<<endl<<endl<<P_age2len<<endl;
       elc_ind(k,i) = tmp_n * P_age2len ;
     }
     iyr=yrs_ind(k,nyrs_ind(k));
@@ -1989,7 +1994,6 @@ FUNCTION Get_Fishery_Predictions
   }
 
 FUNCTION Calc_Dependent_Vars
-  // cout<<"In DepVar stage 1"<<endl;
   get_msy();
 
   if (phase_proj>0) Future_projections();
@@ -2012,7 +2016,6 @@ FUNCTION Calc_Dependent_Vars
     sumBiom(i)        = natage(i)(3,nages)*wt_pop(3,nages);
     Sp_Biom_NoFish(i) = N_NoFsh(i)*elem_prod(pow(exp(-M(i)),spmo_frac) , wt_mature); 
     Sp_Biom_NoFishRatio(i) = Sp_Biom(i) / Sp_Biom_NoFish(i) ;
-    // cout <<spmo_frac<<endl;exit(1);
     depletion         = totbiom(endyr)/totbiom(styr);
     depletion_dyn     = totbiom(endyr)/totbiom_NoFish(endyr);
   }
@@ -2225,7 +2228,6 @@ FUNCTION Compute_priors
       for (int i=1;i<=npars_rw_q(k);i++)
       {
         post_priors_indq(k) += square(log_rw_q_ind(k,i))/ (2.*sigma_rw_q(k,i)*sigma_rw_q(k,i)) ;
-        // cout<<"Hear "<<sigma_rw_q(k,yrs_rw_q(k,i))<<endl;
       }
      //  -q_power_prior(k))/(2*cvq_power_prior(k)*cvq_power_prior(k)); 
   }
@@ -2410,7 +2412,6 @@ FUNCTION Oper_Model
   ofstream SaveOM("Om_Out.dat",ios::app);
   double C_tmp;
   dvariable Fnow;
-  // system("cls"); cout<<"Number of replicates: "<<endl;
   // Initialize recruitment in first year
   for (i=styr_fut-rec_age;i<styr_fut;i++)
     Sp_Biom_future(i) = Sp_Biom(i);
@@ -2517,7 +2518,6 @@ FUNCTION void get_future_Fs(const int& i,const int& iscenario)
     {
       case 1:
         // f_tmp = F35;
-        // cout<< "F "<<f_tmp<<endl;
         for (int k=1;k<=nfsh;k++) f_tmp(k) = mean(F(k,endyr));
         // for (int k=1;k<=nfsh;k++) f_tmp(k) = SolveF2(endyr,nage_future(i), 1.0  * catch_lastyr(k));
         break;
@@ -2559,7 +2559,6 @@ FUNCTION Future_projections
     for (i=styr_fut-rec_age;i<styr_fut;i++)
       Sp_Biom_future(i) = wt_mature * elem_prod(natage(i),pow(S(i),spmo_frac)) ;
 
-    // cout<<Sp_Biom(endyr-10,endyr)<<endl<<Sp_Biom_future<<endl;exit(1);
     nage_future(styr_fut)(2,nages) = ++elem_prod(natage(endyr)(1,nages-1),S(endyr)(1,nages-1));
     nage_future(styr_fut,nages)   += natage(endyr,nages)*S(endyr,nages);
     Sp_Biom_future(styr_fut)       = wt_mature * elem_prod(nage_future(i),pow(S_future(i),spmo_frac)) ;
@@ -2589,7 +2588,6 @@ FUNCTION Future_projections
         // Sp_Biom_NoFishRatio(i)  = Sp_Biom_future(i) / Sp_Biom_NoFish(i) ;
       }
     }
-    // cout<<mean(natmort)<<endl;
     // Now get catch at future ages
     dvar_vector catage_tmp(1,nages);
     for (i=styr_fut; i<=endyr_fut; i++)
@@ -2605,7 +2603,6 @@ FUNCTION Future_projections
           catage_future(i) += catage_tmp;
           catch_future(iscen,i)  += catage_tmp*wt_fsh(k,endyr);
         }
-        // cout<<F_future(1,i)<<endl; cout<<F_future(2,i)<<endl; cout<<F_future(3,i)<<endl; cout<<F_future(4,i)<<endl; cout<<F(1,endyr)<<endl; cout<<F(2,endyr)<<endl; cout<<F(3,endyr)<<endl; cout<<F(4,endyr)<<endl; exit(1);
       }
       SSB_fut(iscen,i) = Sp_Biom_future(i);
     }
@@ -2882,7 +2879,6 @@ FUNCTION dvariable yield(const dvar_vector& Fratio, const dvariable& Ftmp,int iy
     Ztmp    += Fatmp(k);
   } 
   dvar_vector survtmp = mfexp(-Ztmp);
-  // cout<<Ftmp<<" ";
 
   Ntmp(1) = 1.;
   for ( j=1 ; j < nages; j++ )
@@ -2929,7 +2925,6 @@ FUNCTION dvariable yield(const dvar_vector& Fratio, const dvariable& Ftmp)
     Ztmp    += Fatmp(k);
   } 
   dvar_vector survtmp = mfexp(-Ztmp);
-  // cout<<Ftmp<<" ";
 
   Ntmp(1) = 1.;
   for ( j=1 ; j < nages; j++ )
@@ -3148,7 +3143,6 @@ FUNCTION Get_Bzero
   mod_rec(styr_rec,styr) = column(natagetmp,1);
   natage(styr)  = natagetmp(styr); // OjO
   Sp_Biom(styr) = elem_prod(natagetmp(styr),pow(survtmp,spmo_frac)) * wt_mature; 
-  // cout <<natagetmp<<endl;exit(1);
 
 FUNCTION dvariable Requil(dvariable& phi)
   RETURN_ARRAYS_INCREMENT();
@@ -3175,7 +3169,7 @@ FUNCTION dvariable Requil(dvariable& phi)
 
 FUNCTION write_mceval_hdr
     for (k=1;k<=nind;k++)
-      mceval<< " q_ind_"<< k<< " ";
+      mceval<< " model Obj_Fun q_ind_"<< k<< " ";
     mceval<<"M steepness depletion MSY MSYL Fmsy Fcur_Fmsy Bcur_Bmsy Bmsy totbiom_"<<endyr<<" "<< 
     " F35          "<< 
     " F40          "<< 
@@ -3212,11 +3206,6 @@ REPORT_SECTION
       }
     }
         
-    for (k=1;k<=nind;k++)
-    {
-      // cout<<indname(k)<<endl;
-      // cout<<get_AC(k)<<endl<<endl;
-    }
     if (!Popes)
       for (k=1;k<=nfsh;k++)
         Ftot += F(k);
