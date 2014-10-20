@@ -3922,8 +3922,10 @@ FUNCTION Write_SimDatafile
     //Now write from simulated population
     //
     // Create the name of the simulated dataset
-    simname = "sim_"+ adstring(itoa(isim,buffer,10)) + ".dat";
-    truname = "tru_"+ adstring(itoa(isim,buffer,10)) + ".dat";
+    // simname = "sim_"+ adstring(itoa(isim,buffer,10)) + ".dat";
+    // truname = "tru_"+ adstring(itoa(isim,buffer,10)) + ".dat";
+		simname = "sim_"+ adstring(sprintf(buffer,"%d",isim)) + ".dat";
+    truname = "tru_"+ adstring(sprintf(buffer,"%d",isim)) + ".dat";
     ofstream trudat(truname);
     truth(Rzero);
     truth(Fmsy);
@@ -4256,7 +4258,8 @@ FUNCTION Write_Datafile
   for (int isim=1;isim<=nsims;isim++)
   {
     // Create the name of the simulated dataset
-    simname = "sim_"+ adstring(itoa(isim,buffer,10)) + ".dat";
+    // simname = "sim_"+ adstring(itoa(isim,buffer,10)) + ".dat";
+		simname = "sim_"+ adstring(sprintf(buffer,"%d",isim)) + ".dat";
     // Open the simulated dataset for writing
     ofstream simdat(simname);
     simdat << "# first year" <<endl;
