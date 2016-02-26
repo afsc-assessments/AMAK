@@ -3853,18 +3853,29 @@ FUNCTION Write_SimDatafile
   ofstream TruDB("truout.dat",ios::app); 
   // compute the autocorrelation term for residuals of fit to indices...
   // for (k=1;k<=nind;k++) ac(k) = get_AC(k);
-  int nyrs_fsh_age_sim=endyr-styr;
-  int nyrs_ind_sim    = 1+endyr-styr;
-  int nyrs_ind_age_sim= 1+endyr-styr;
-  ivector yrs_fsh_age_sim(1,nyrs_fsh_age_sim);
-  ivector yrs_ind_sim(1,nyrs_ind_sim);
-  ivector yrs_ind_age_sim(1,nyrs_ind_sim);
-  yrs_fsh_age_sim.fill_seqadd(1977,1);
-  yrs_ind_sim.fill_seqadd(1977,1);
-  yrs_ind_age_sim.fill_seqadd(1977,1);
-  ivector n_sample_fsh_age_sim(1,nyrs_fsh_age_sim);
-  ivector n_sample_ind_age_sim(1,nyrs_ind_age_sim);
-  dvector new_ind_sim(1,nyrs_ind_sim);
+  // #int nyrs_fsh_age_sim = endyr-styr;
+  // #int nyrs_ind_sim     = 1+endyr-styr;
+  // #int nyrs_ind_age_sim = 1+endyr-styr;
+  // yrs_fsh_age_sim.fill_seqadd(1977,1);
+  // yrs_ind_sim.fill_seqadd(1977,1);
+  // yrs_ind_age_sim.fill_seqadd(1977,1);
+  // dvector new_ind_sim(1,nyrs_ind_sim);
+  // ivector n_sample_fsh_age_sim(1,nyrs_fsh_age_sim);
+  // ivector n_sample_ind_age_sim(1,nyrs_ind_age_sim);
+
+  ivector nyrs_fsh_age_sim  = nyrs_fsh_age;
+  ivector nyrs_ind_sim      = nyrs_ind;
+  ivector nyrs_ind_age_sim  = nyrs_ind_age;
+  //init_imatrix yrs_ind_in(1,nind,1,nyrs_ind)         //Years of index value (annual)
+  imatrix yrs_fsh_age_sim(1,nfsh,1,nyrs_fsh_age_sim);
+  imatrix yrs_ind_sim(1,nind,1,nyrs_ind_sim);
+  imatrix yrs_ind_age_sim(1,nind,1,nyrs_ind_sim);
+  imatrix n_sample_fsh_age_sim(1,nfsh,1,nyrs_fsh_age_sim);
+  imatrix n_sample_ind_age_sim(1,nind,1,nyrs_ind_age_sim);
+  yrs_fsh_age_sim       = yrs_fsh_age;
+  yrs_ind_sim           = yrs_ind;
+  yrs_ind_age_sim       = yrs_ind_age;
+  dmatrix new_ind_sim(1,nind,1,nyrs_ind);
   dvector sim_rec_devs(styr_rec,endyr);
   dvector sim_Sp_Biom(styr_rec,endyr);
   dmatrix sim_natage(styr_rec,endyr,1,nages);
@@ -4012,7 +4023,7 @@ FUNCTION Write_SimDatafile
     for (k=1;k<=nfsh;k++)
     {
       simdat << "# " <<fshname(k)<< " " << k <<endl;
-      simdat << nyrs_fsh_age_sim <<endl;
+      simdat << nyrs_fsh_age_sim(k) <<endl;
     }
     simdat << "# years for fishery age data " <<endl;
     for (k=1;k<=nfsh;k++)
@@ -4023,9 +4034,9 @@ FUNCTION Write_SimDatafile
     simdat << "# sample sizes for fishery age data " <<endl;
     for (k=1;k<=nfsh;k++)
     {
-      n_sample_fsh_age_sim = mean(n_sample_fsh_age(k));
+      n_sample_fsh_age_sim(k) = mean(n_sample_fsh_age(k));
       simdat << "# " <<fshname(k)<< " " << k <<endl;
-      simdat << n_sample_fsh_age_sim         <<endl;    
+      simdat << n_sample_fsh_age_sim(k)         <<endl;    
     }
     simdat << "# Observed age compositions for fishery" <<endl;
     for (k=1;k<=nfsh;k++)
@@ -4034,16 +4045,16 @@ FUNCTION Write_SimDatafile
       double Ctmp; // total catch
       dvector freq(1,nages);
       simdat << "# " << fshname(k) <<endl;
-      for (i=1;i<=nyrs_fsh_age_sim;i++)
+      for (i=1;i<=nyrs_fsh_age_sim(k);i++)
       {
-        int iyr = yrs_fsh_age_sim(i);
+        int iyr = yrs_fsh_age_sim(k,i);
         // Add noise here
         freq.initialize();
-        ivector bin(1,n_sample_fsh_age_sim(i));
+        ivector bin(1,n_sample_fsh_age_sim(k,i));
         p  = catagetmp(iyr);
         p /= sum(p);
         bin.fill_multinomial(rng,p); // fill a vector v
-        for (int j=1;j<=n_sample_fsh_age_sim(i);j++)
+        for (int j=1;j<=n_sample_fsh_age_sim(k,i);j++)
           freq(bin(j))++;
         // Apply ageing error to samples..............
         // p = age_err *freq/sum(freq); 
@@ -4070,7 +4081,7 @@ FUNCTION Write_SimDatafile
     for (k=1;k<=nind;k++)
     {
       simdat << "# " << indname(k) <<endl;
-      simdat << nyrs_ind_sim  <<endl;                   
+      simdat << nyrs_ind_sim(k)  <<endl;                   
     }
     simdat << "# Years of index values (annual)" <<endl;
     for (k=1;k<=nind;k++)
@@ -4087,25 +4098,25 @@ FUNCTION Write_SimDatafile
     simdat << "# values for indices (annual)"<<endl;
     // note assumes only one index...
     double ind_sigma;
-    dvector ind_devs(1,nyrs_ind_sim);
+    dmatrix ind_devs(1,nind,1,nyrs_ind_sim);
     for (k=1;k<=nind;k++)
     {
       ind_sigma = mean(obs_lse_ind(k)) ;
-      ind_sigma = 0.10 ;
+      //ind_sigma = 0.30 ;
       simdat << "# " <<indname(k)<< " " << k <<endl;
       // Add noise here
       // fill vector with unit normal RVs
       ind_devs.fill_randn(rng);
-      ind_devs *= ind_sigma ;
-      for (i=1;i<=nyrs_ind_sim;i++)
+      ind_devs(k) *= ind_sigma ;
+      for (i=1;i<=nyrs_ind_sim(k);i++)
       {
-        int iyr=yrs_ind_sim(i);
+        int iyr=yrs_ind_sim(k,i);
         //uncorrelated...corr_dev(k,i) = ac(k) * corr_dev(k,i-1) + sqrt(1.-square(ac(k))) * corr_dev(k,i);
-        new_ind_sim(i) = mfexp(ind_devs(i) - ind_sigma/2.) * value(elem_prod(wt_ind(k,iyr),elem_prod(pow(S(iyr),ind_month_frac(k)), 
+        new_ind_sim(k,i) = mfexp(ind_devs(k,i) - ind_sigma/2.) * value(elem_prod(wt_ind(k,iyr),elem_prod(pow(S(iyr),ind_month_frac(k)), 
                         sim_natage(iyr))) * q_ind_sim*sel_ind(k,iyr)); 
       }
-      simdat << new_ind_sim     <<endl;
-      dvector ExactSurvey = elem_div(new_ind_sim,exp(ind_devs-ind_sigma/2.));
+      simdat << new_ind_sim(k)     <<endl;
+      dvector ExactSurvey = elem_div(new_ind_sim(k),exp(ind_devs(k)-ind_sigma/2.));
       truth(ExactSurvey);
     }
     simdat << "# standard errors for indices (by year) " <<endl;
@@ -4113,26 +4124,26 @@ FUNCTION Write_SimDatafile
     {
       simdat << "# " <<indname(k)<< " " << k <<endl;
       // simdat << new_ind_sim*mean(elem_div(obs_se_ind(k),obs_ind(k)))  <<endl;
-      simdat << new_ind_sim*ind_sigma  <<endl;
+      simdat << new_ind_sim(k)*ind_sigma  <<endl;
     }
     simdat << "# Number of years of age data available for index" <<endl;
     for (k=1;k<=nind;k++)
     {
       simdat << "# " <<indname(k)<< " " << k <<endl;
-      simdat << nyrs_ind_age_sim <<endl;
+      simdat << nyrs_ind_age_sim(k) <<endl;
     }
     simdat << "# Years of index values (annual)" <<endl;
     for (k=1;k<=nind;k++)
     {
       simdat << "# " <<indname(k)<< endl;
-      simdat << yrs_ind_age_sim <<endl;
+      simdat << yrs_ind_age_sim(k) <<endl;
     }
     simdat << "# Sample sizes for age data from indices" <<endl;
     for (k=1;k<=nind;k++)
     {
-      n_sample_ind_age_sim = mean(n_sample_ind_age(k));
+      n_sample_ind_age_sim(k) = mean(n_sample_ind_age(k));
       simdat << "# " <<indname(k)<< endl;
-      simdat << n_sample_ind_age_sim <<endl;
+      simdat << n_sample_ind_age_sim(k) <<endl;
     }
     simdat << "# values of proportions at age in index" <<endl;
     for (k=1;k<=nind;k++)
@@ -4140,18 +4151,18 @@ FUNCTION Write_SimDatafile
       simdat << "# " <<indname(k)<< endl;
       dvector p(1,nages);
       dvector freq(1,nages);
-      for (i=1;i<=nyrs_ind_age_sim;i++)
+      for (i=1;i<=nyrs_ind_age_sim(k);i++)
       {
-        int iyr = yrs_ind_age_sim(i);
+        int iyr = yrs_ind_age_sim(k,i);
         // Add noise here
         freq.initialize();
-        ivector bin(1,n_sample_ind_age_sim(i));
+        ivector bin(1,n_sample_ind_age_sim(k,i));
         // p = age_err * value(elem_prod( elem_prod(pow(S(iyr),ind_month_frac(k)), sim_natage(iyr))*q_ind_sim , sel_ind(k,iyr))); 
         p = value(elem_prod( elem_prod(pow(S(iyr),ind_month_frac(k)), sim_natage(iyr))*q_ind_sim , sel_ind(k,iyr))); 
         p /= sum(p);
         // fill vector with multinomial samples
         bin.fill_multinomial(rng,p); // fill a vector v
-        for (int j=1;j<=n_sample_ind_age_sim(i);j++)
+        for (int j=1;j<=n_sample_ind_age_sim(k,i);j++)
           freq(bin(j))++;
         simdat << "# " <<indname(k)<< " year: "<< iyr<< endl;
         simdat << freq/sum(freq) <<endl;
@@ -4206,18 +4217,28 @@ FUNCTION Write_SimDatafile
         simdat<<fshname(k)<<" "<<yrs_fsh_age(k,i)<<" "<<catagetmp(yrs_fsh_age(k,i)) <<endl;
     }
     // Write simple file by simulation
-    dvector ExactSurvey = elem_div(new_ind_sim,exp(ind_devs-ind_sigma/2.));
-    for (i=styr;i<=endyr;i++)
+    dmatrix ExactSurvey(1,nind,1,nyrs_ind) ;
+    for (k=1;k<=nind;k++)
     {
-      SimDB<<model_name<<" "<<isim<<" "<< i<<" "<<
-        sim_catchbio(i)       <<" "<< 
-        new_ind_sim(i-styr+1) <<" "<< 
-        new_ind_sim(i-styr+1)*ind_sigma  <<endl;
-      TruDB<<model_name<<" " <<isim<<" "<< i<<" "<<
+      ExactSurvey(k) = elem_div(new_ind_sim(k),exp(ind_devs(k)-ind_sigma/2.));
+      for (i=1;i<=nyrs_ind(k);i++)
+      {
+        SimDB<<model_name<<" simIndex "<<isim<<" "<< yrs_ind_sim(k,i) <<" "<< 
+        new_ind_sim(k,i) <<" "<< 
+        new_ind_sim(k,i)*ind_sigma  <<endl;
+      }
+    }
+      
+    for (k=1;k<=nfsh;k++)
+    {
+      ExactSurvey(k) = elem_div(new_ind_sim(k),exp(ind_devs(k)-ind_sigma/2.));
+      for (i=styr;i<=endyr;i++)
+      {
+       SimDB<<model_name<<" simCatch "<<isim<<" "<< i<<" "<< sim_catchbio(i)       <<" "<< endl;
+       TruDB<<model_name<<" " <<isim<<" "<< i<<" "<<
         sim_catchbio(i)      <<" "<< 
         sim_natage(i,1)      <<" "<< 
         sim_Sp_Biom(i)       <<" "<< 
-        ExactSurvey(i-styr+1)<<" "<<
         steepness            <<" "<< 
         Bmsy                 <<" "<< 
         MSYL                 <<" "<< 
@@ -4236,7 +4257,7 @@ FUNCTION Write_SimDatafile
         MSY                  <<" "<< 
         SurvBmsy             <<" "<<
         endl;
-
+    }
     trudat.close();
   }
   SimDB.close();
