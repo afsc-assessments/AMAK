@@ -1,0 +1,28 @@
+# Reference hm.prj
+123  # seed
+1 # Flag to tell if this is a SSL forage species                 
+0 # Flag to Dorn's version of a constant buffer                  
+ 1 # Flag to solve for F in first year or not 0==don't solve
+0 # Flag to use 2nd-year catch/TAC
+1   # Number of fisheries
+14   # Number of projection years
+1000 # Number of simulations
+2014 # Begin year of projection
+12 # Number of ages
+0.15 0.15 0.15 0.15 0.15 0.15 0.15 0.15 0.15 0.15 0.15 0.15  # Natural Mortality       
+29016.9 # TAC in current year (assumed catch) 
+29016.9 # TAC in current year+1 (assumed catch) 
+ 0.314254 1.19433 1.57528 1.41577 1.26022 0.916651 0.861054 0.892487 0.892487 0.892487 0.892487 0.892487    # Fratio                  
+0.0500306  # average f                  
+ 1  # author f                  
+1.5  # Spawnmo                   
+# Wt spawn
+ 27 67 92 101 125 164 193 202 229 240 297 436
+# Wt fish
+ 27 67 92 101 125 164 193 202 229 240 297 436 
+# Maturity
+ 0 0 0.18 0.41 0.475 0.485 0.495 0.5 0.5 0.5 0.5 0.5
+# selectivity
+ 0.314254 1.19433 1.57528 1.41577 1.26022 0.916651 0.861054 0.892487 0.892487 0.892487 0.892487 0.892487 
+# natage
+ 3306.23 1798.81 2399.41 1147.17 302.769 181.347 167.276 84.4276 45.4165 74.9536 102.314 377.71
