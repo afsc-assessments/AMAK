@@ -1127,7 +1127,7 @@ PARAMETER_SECTION
   init_number log_Rzero(phase_Rzero)  
   // OjO
   // init_bounded_vector initage_dev(2,nages,-15,15,4)
-  init_bounded_vector rec_dev(styr_rec,endyr,-15,15,2)
+  init_bounded_vector rec_dev(styr_rec,endyr,-25,25,2)
   // init_vector rec_dev(styr_rec,endyr,2)
   init_number log_sigmar(phase_sigmar);
   number m_sigmarsq  
@@ -1144,7 +1144,7 @@ PARAMETER_SECTION
  // Fishing mortality parameters
   // init_vector         log_avg_fmort(1,nfsh,phase_fmort)
   // init_bounded_matrix fmort_dev(1,nfsh,styr,endyr,-15,15.,phase_fmort)
-  init_bounded_matrix fmort(1,nfsh,styr,endyr,0.00,5.,phase_fmort)
+  init_bounded_matrix fmort(1,nfsh,styr,endyr,0.00,15.,phase_fmort)
   vector Fmort(styr,endyr);  // Annual total Fmort
   number hrate
   number catch_tmp
@@ -3265,6 +3265,7 @@ FUNCTION write_mceval_hdr
 REPORT_SECTION
   if (last_phase())
   {
+    save_gradients(gradients);
     int nvar1=initial_params::nvarcalc(); // get the number of active parameters
     int ndvar=stddev_params::num_stddev_calc();
     int offset=1;
