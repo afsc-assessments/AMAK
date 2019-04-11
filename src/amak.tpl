@@ -61,6 +61,11 @@ DATA_SECTION
   int cmp_no // candidate management procedure
   int nnodes_tmp;
   !!CLASS ofstream mceval("mceval.dat")
+  !!CLASS ofstream mceval_sr("mceval_sr.dat")
+  !!CLASS ofstream mceval_R("mceval_R.dat")
+  !!CLASS ofstream mceval_srv("mceval_srv.dat")
+  !!CLASS ofstream mceval_M("mceval_M.dat")
+  !!CLASS ofstream mceval_proj("mceval_proj.dat")
   !!long int lseed=iseed;
   !!CLASS random_number_generator rng(iseed);
   
@@ -291,6 +296,7 @@ DATA_SECTION
 
   //Spawning month-----
   init_number spawnmo
+  !! log_input(spawnmo);
   number spmo_frac
   !! spmo_frac = (spawnmo-1)/12.;
 
@@ -396,11 +402,12 @@ DATA_SECTION
   !! log_input(npars_Mage);
   !! log_input(ages_M_changes);
   !! log_input(Mage_in);
-  !! log_input(Mage_offset_in);
+  !! log_input(phase_Mage);
+  // !! log_input(Mage_offset_in);
 
   // time-varying M
   init_int    phase_rw_M
-  init_int npars_rw_M
+  init_int    npars_rw_M
   init_ivector  yrs_rw_M(1,npars_rw_M);
   init_vector sigma_rw_M(1,npars_rw_M)
  LOCAL_CALCS
@@ -414,10 +421,6 @@ DATA_SECTION
   vector log_qprior(1,nind)      
   init_vector cvqprior(1,nind)     
   init_ivector phase_q(1,nind)
-  !! log_input(qprior);
-  !! log_input(cvqprior);
-  !! log_input(phase_q);
-
   init_vector q_power_prior(1,nind)      
   vector log_q_power_prior(1,nind)      
   init_vector cvq_power_prior(1,nind)     
@@ -428,6 +431,13 @@ DATA_SECTION
   init_imatrix  yrs_rw_q(1,nind,1,npars_rw_q); // Ragged array
   init_matrix sigma_rw_q(1,nind,1,npars_rw_q); // Ragged array
  LOCAL_CALCS
+  log_input(qprior);
+  log_input(cvqprior);
+  log_input(phase_q);
+  log_input(q_power_prior);
+  log_input(cvq_power_prior);
+  log_input(phase_q_power);
+
   log_input(phase_rw_q);
   log_input(npars_rw_q);
   log_input(yrs_rw_q);
@@ -826,7 +836,16 @@ DATA_SECTION
  LOCAL_CALCS
   for (int k=1;k<=nfsh;k++) 
   {
-    if ((endyr-retro)<=yrs_sel_ch_fsh(k,n_sel_ch_fsh(k))) n_sel_ch_fsh(k)-=retro ;  
+    if ((endyr-retro)<=yrs_sel_ch_fsh(k,n_sel_ch_fsh(k))) 
+		{
+			int itmp=1;
+			while ((endyr-retro) > yrs_sel_ch_fsh(k,itmp))
+			{
+			  n_sel_ch_fsh(k) = itmp ;  
+      cout<<"yrs_ch "<<yrs_sel_ch_fsh(k)(1,n_sel_ch_fsh(k))<<endl;
+			  itmp++;
+			}
+		}
     for (int i=1;i<=retro;i++) 
     {
       cout<<"here"<<max(yrs_fsh_age_in(k)(1,nyrs_fsh_age(k)))<<endl;
@@ -855,7 +874,7 @@ DATA_SECTION
     for (int i=1;i<=retro;i++) 
     {
       // index values
-      if (max(yrs_ind_in(k)(1,nyrs_ind(k)))>=(endyr-retro)) 
+      if (max(yrs_ind_in(k)(1,nyrs_ind(k)))>(endyr-retro)) 
         nyrs_ind(k) -= 1;
       // Ages (since they can be different than actual index years)
       if (max(yrs_ind_age_in(k)(1,nyrs_ind_age(k)))>=(endyr-retro)) 
@@ -1078,7 +1097,7 @@ DATA_SECTION
 
 PARAMETER_SECTION
  // Biological Parameters
-  init_bounded_number tau(0.01,3.,3)
+  init_bounded_number tau(0.01,3.,-3)
   init_bounded_number Mest(.02,4.8,phase_M)
   init_bounded_vector Mage_offset(1,npars_Mage,-3,3,phase_Mage)
   vector Mage(1,nages)
@@ -1398,7 +1417,8 @@ PRELIMINARY_CALCS_SECTION
     {
      if (j==ages_M_changes(jj))
       {
-        M(styr,j) = M(styr,1)*mfexp(Mage_offset(jj));
+        // M(styr,j) = M(styr,1)*mfexp(Mage_offset(jj));
+        M(styr,j) = Mest*mfexp(Mage_offset(jj));
         jj++;
         if (npars_Mage < jj) jj=npars_Mage;
       }
@@ -1481,13 +1501,14 @@ PROCEDURE_SECTION
     }
     else
     {
-      if (mcflag)
-        Calc_Dependent_Vars();
+      // if (mcflag)
+      //   Calc_Dependent_Vars();
     }
   }
   // Other calcs-------------------------
   if (mceval_phase())
   {
+    Calc_Dependent_Vars();
     if (oper_mod)
       Oper_Model();
     else
@@ -1503,16 +1524,72 @@ FUNCTION write_mceval
   if (mcmcmode != 3)
     write_mceval_hdr();
   mcmcmode = 3;
+  mc_count++;
+    mceval_sr <<"curve 0 0"<<endl;
+    dvariable stock;
+    for (i=1;i<=30;i++)
+    {
+      stock = double (i) * Bzero /25.;
+      if (active(log_Rzero))
+        mceval_sr << "curve "<<stock <<" "<< SRecruit(stock)<<endl;
+      else
+        mceval_sr << "curve "<<stock <<" 99 "<<endl;
+    }
+    for (k=1;k<=5;k+=4)
+		{
+      for (i=styr_fut;i<=endyr_fut;i++)
+		  {
+		   if (int(i-rec_age)<styr_fut)
+        mceval_R<<k<<" "<< i <<" "<< natage(i-rec_age,1) <<endl;     
+		   else
+        mceval_R<<k<<" "<< i <<" "<< SRecruit( SSB_fut(k,i-rec_age) ) * mfexp(rec_dev_future(i)) <<endl;     
+      }
+    }
+    for (i=1;i<=nyrs_ind(1);i++)
+    {
+      // iyr = int(yrs_ind(k,i));
+      mceval_srv<<yrs_ind(1,i)<<" "<<obs_ind(1,i)<<" "<< pred_ind(1,i) <<" "<< mc_count<<endl;
+		}
+    for (k=1;k<=5;k++)
+    for (i=styr;i<=endyr;i++)
+		{
+      // mceval_srv  <<i<<" "<< (i-rec_age-1)<<" "<<natage(i,1)<< endl;
+      // ind_like(k) += square(log(obs_ind(k,i)) - log(pred_ind(k,i)) ) / 
+      mceval_sr   <<"est "<< Sp_Biom(i-rec_age-1)<<" "<<natage(i,1)<< endl;
+      mceval_M<<i <<" "<< M(i,2) <<" "<<M(i,4)<<endl;
+    }
+		dvariable Rtmp;
+    for (k=1;k<=5;k++)
+		{
+      for (i=styr_fut;i<=endyr_fut;i++)
+		  {
+		   if (int(i-rec_age)<styr_fut)
+        Rtmp = natage(i-rec_age,1) ;     
+		   else
+        Rtmp = SRecruit( SSB_fut(k,i-rec_age) ) * mfexp(rec_dev_future(i)) ;     
+				if (k!=5)
+          mceval_proj<<mc_count<<" "<<k<<" "<<i <<" "<<SSB_fut(k,i)<<" "<<catch_future(k,i)<<" "<< Rtmp <<endl;
+				else
+          mceval_proj<<mc_count<<" "<<k<<" "<<i <<" "<<SSB_fut(k,i)<<" 0 "<< Rtmp <<endl;
+      }
+    }
+    
+  // styr_sp  = styr_rec - rec_age - 1 ;    // First year of spawning biomass  
+  //sdreport_vector recruits(styr,endyr+1)
+  //sdreport_vector Sp_Biom(styr_sp,endyr+1)
+
   mceval<< model_name         << " "  ;
   mceval<< obj_fun            << " "  ;
+
   // mceval<< rec_dev_future << " "  ;
   // mceval<<endl;
   get_msy();
   Future_projections();
-  Calc_Dependent_Vars();
+  // Calc_Dependent_Vars();
   mceval<<
+  B100        << " "<< 
   q_ind(1,1)  << " "<< 
-  M(endyr,1)    << " "<< 
+  M(endyr)    << " "<< 
   steepness << " "<< 
   depletion << " "<< 
   MSY       << " "<< 
@@ -1525,12 +1602,10 @@ FUNCTION write_mceval
   F35       << " "<<
   F40       << " "<<
   F50       << " "<<
-  SSB_fut(1,styr_fut) << " "<< 
-  sel_fsh(1,endyr-2)<< " "<<
-  sel_fsh(1,endyr-7)<< " "<<
-  sel_fsh(1,endyr-12)<< " "<<
-  endl;
-  /*
+  SSB_fut(1,endyr_fut) << " "<< 
+  // sel_fsh(1,endyr-2)<< " "<<
+  // sel_fsh(1,endyr-7)<< " "<<
+  // sel_fsh(1,endyr-12)<< " "<<
   SSB_fut(2,endyr_fut) << " "<< 
   SSB_fut(3,endyr_fut) << " "<< 
   SSB_fut(4,endyr_fut) << " "<< 
@@ -1539,7 +1614,7 @@ FUNCTION write_mceval
   catch_future(2,styr_fut)    << " "<<  
   catch_future(3,styr_fut)    << " "<<  
   catch_future(4,styr_fut)    << " "<<  endl;
-  */
+
 
 //-----TRANSFORMATION FUNCION AGE->LENGTH--------------------------------------------------
 FUNCTION Get_Age2length
@@ -1809,16 +1884,18 @@ FUNCTION Get_Selectivity
 
 FUNCTION Get_NatMortality
   natmort = Mest;
-  M(styr) = Mest;
+	if (active(Mest)) 
+		M(styr) = Mest;
   // Age varying part
-  if (npars_Mage>0 && (active(Mest) || active(Mage_offset)))
+  if (npars_Mage>0 )
   {
     int jj=1;
     for (j=1;j<=nages;j++)
     {
       if (j==ages_M_changes(jj))
       {
-        M(styr,j) = M(styr,1)*mfexp(Mage_offset(jj));
+        // M(styr,j) = M(styr,1)*mfexp(Mage_offset(jj));
+        M(styr,j) = Mest*mfexp(Mage_offset(jj));
         jj++;
         if (npars_Mage < jj) jj=npars_Mage;
       }
@@ -3205,7 +3282,120 @@ REPORT_SECTION
         } 
       }
     }
-        
+  //--------------------------------------------------------
+  //  Write cumulative likelihoods for main data parts
+  // Count up number of columns
+	int icum  = 0;
+	int ncols = 0;
+  for (k=1;k<=nind;k++)
+	{
+		if (nyrs_ind(k)>0)
+		  ncols++;
+    for (i=1;i<=nyrs_ind(k);i++)
+	    icum++;
+	}
+  for (k=1;k<=nfsh;k++)
+	{
+		if (nyrs_fsh_age(k)>0)
+		  ncols++;
+    for (int i=1;i<=nyrs_fsh_age(k);i++)
+	    icum++;
+	}
+  for (k=1;k<=nind;k++)
+	{
+		if (nyrs_ind_length(k)>0)
+		  ncols++;
+    for (int i=1;i<=nyrs_ind_length(k);i++)
+	    icum++;
+		if (nyrs_ind_age(k)>0)
+		  ncols++;
+    for (int i=1;i<=nyrs_ind_age(k);i++)
+	    icum++;
+	}
+  //--------------------------------------------------------
+  dmatrix cum_NLL(styr,endyr,1,ncols);
+  cum_NLL.initialize();
+
+  // Fit to indices (log-Normal) -------------------------------------------
+	for (int iyr=styr+1; iyr<=endyr;iyr++)
+	{
+		int icol=0;
+    for (k=1;k<=nind;k++)
+		{
+			icol++;
+      for (i=1;i<=nyrs_ind(k);i++)
+      {
+        if( iyr == yrs_ind(k,i) )
+          cum_NLL(iyr,icol) += value(square(log(obs_ind(k,i)) - log(pred_ind(k,i)) ) / 
+                                     (2.*obs_lse_ind(k,i)*obs_lse_ind(k,i)) );
+      }
+    }
+  
+    for (k=1;k<=nfsh;k++)
+		{
+			if(nyrs_fsh_age(k)>0)
+			{
+				icol++;
+        for (int i=1;i<=nyrs_fsh_age(k);i++)
+          if( iyr == yrs_fsh_age(k,i))
+					{
+            cum_NLL(iyr,icol) -= value(n_sample_fsh_age(k,i)*(oac_fsh(k,i) + 0.001) * log(eac_fsh(k,i) + 0.001 )  );
+            cum_NLL(iyr,icol) +=      (n_sample_fsh_age(k,i)*(oac_fsh(k,i) + 0.001) * log(oac_fsh(k,i) + 0.001 )  );
+					}
+      }
+    }
+  
+    for (k=1;k<=nfsh;k++)
+			if(nyrs_fsh_length(k)>0)
+			{
+			  icol++;
+        for (int i=1;i<=nyrs_fsh_length(k);i++)
+          if( iyr == yrs_fsh_length(k,i))
+					{
+            cum_NLL(iyr,icol) -= value(n_sample_fsh_length(k,i)*(olc_fsh(k,i) + 0.001) * log(elc_fsh(k,i) + 0.001 ) );
+            cum_NLL(iyr,icol) +=      (n_sample_fsh_length(k,i)*(olc_fsh(k,i) + 0.001) * log(olc_fsh(k,i) + 0.001 ) );
+			    }
+			}
+    //----------------------------------------------------------
+    for (k=1;k<=nind;k++)
+		{
+			if(nyrs_ind_length(k)>0)
+			{
+			  icol++;
+        for (int i=1;i<=nyrs_ind_length(k);i++)
+          if( iyr == yrs_ind_length(k,i))
+					{
+            cum_NLL(iyr,icol) -= value(n_sample_ind_length(k,i)*(olc_ind(k,i) + 0.001) * log(elc_ind(k,i) + 0.001 ) );
+            cum_NLL(iyr,icol) +=      (n_sample_ind_length(k,i)*(olc_ind(k,i) + 0.001) * log(olc_ind(k,i) + 0.001 ) );
+			    }
+			}
+	  }
+  
+    //----------------------------------------------------------
+    for (k=1;k<=nind;k++)
+	  {
+			if(nyrs_ind_age(k)>0)
+			{
+			  icol++;
+        for (int i=1;i<=nyrs_ind_age(k);i++)
+          if( iyr == yrs_ind_age(k,i))
+			    {
+            cum_NLL(iyr,icol) -= value(n_sample_ind_age(k,i)*(oac_ind(k,i) + 0.001) * log(eac_ind(k,i) + 0.001 ) );
+            cum_NLL(iyr,icol) +=      (n_sample_ind_age(k,i)*(oac_ind(k,i) + 0.001) * log(oac_ind(k,i) + 0.001 ) );
+			    }
+			}
+		}
+		if(iyr<endyr)
+      cum_NLL(iyr+1) = cum_NLL(iyr) ; 
+	}
+  ofstream cum_like("cum_NLL.rep");
+	report<<"Cumulative likelihoods"<<endl;
+	for (int iyr=styr+1; iyr<=endyr;iyr++)
+	{
+		cum_like<< iyr<<" "<<cum_NLL(iyr)<<endl;
+		report<< iyr<<" "<<cum_NLL(iyr)<<endl;
+	}
+  //----------------------------------------------------------
     if (!Popes)
       for (k=1;k<=nfsh;k++)
         Ftot += F(k);
@@ -3574,6 +3764,55 @@ FUNCTION write_msy_out
   msyout<<"Bzero "<<Bzero<< endl;
   msyout<<"Rzero "<<Rzero<< endl;
 
+
+// Function to write out data file for projection model....just an output for alternative projections
+FUNCTION write_proj
+  ofstream projout( projfile_name );
+// Function to write out data file for projection model....
+ projout << "#model_name"<<endl;
+ projout << model_name<<endl;
+ projout <<"1    # SSLn species..."<<endl;
+ projout <<"0    # Buffer of Dorn"<<endl;
+ projout <<nfsh<< "    # Number of fsheries"<<endl;
+ projout <<"1    # Number of sexes"<<endl;
+ dvariable sumF=0.;
+ dmatrix seltmp(1,nfsh,1,nages) ;
+ seltmp.initialize();
+ Fratio.initialize();
+ for (i = endyr-4;i<=endyr;i++) 
+   for (k=1;k<=nfsh;k++)
+   {
+     Fratio(k) += (mean(F(k,i))) ;
+     sumF      += Fratio(k) ;
+     seltmp(k) += value(sel_fsh(k,i));
+   }
+ sumF /= 5.;
+ seltmp /= 5.;
+ for (k=1;k<=nfsh;k++) seltmp(k) /= max(seltmp(k));
+ projout << sumF << "  # averagei 5yr f                  " <<endl;
+ // projout << mean(Fmort(endyr_r-4,endyr_r))<<"  # averagei 5yr f                  " <<endl;
+ projout << " 1  # author f                  " <<endl;
+ projout <<" 0.4  # ABC SPR        "<<endl;
+ projout <<" 0.35 # MSY/OFL SPR    "<<endl;
+ projout << "# Spawnmo  "<<endl<<spawnmo <<endl;
+ projout <<nages<< " # Number of ages" <<endl;
+ projout << "# Fratio"<<endl<<Fratio/sum(Fratio) <<endl;
+ projout <<M(endyr) << " # Natural Mortality       " <<endl;
+ projout <<"# Maturity"<<endl<< maturity/max(maturity)<< endl;
+ projout <<"# Wt spawn"<<endl<< wt_pop     << endl;
+ projout <<"# Wt fsh"<<endl; for (k=1;k<=nfsh;k++) projout << wt_fsh(k,endyr)<<endl;
+ projout <<"# selectivity"<<endl; for (k=1;k<=nfsh;k++) projout << seltmp(k)<<endl;
+ projout <<"# natage"<<endl<< natage(endyr) << endl;
+ projout <<"#_N_recruitment_years (not including last 1 estimates)"<<endl<<endyr-(1977+rec_age+1) << endl;
+ projout <<"#_Recruitment_start_at_1977_yearclass=1978_for_age_1_recruits"<<yy(1977+rec_age,endyr-1-rec_age)<<endl;
+ projout <<mod_rec(1977+rec_age,endyr-1-rec_age)<< endl;
+ // projout <<"# Nrec"<<endl<< endyr-1978<< endl;
+ // projout <<"# rec"<<endl<< pred_rec(1978,endyr) << endl;
+ projout <<"# SpawningBiomass"<<endl; // << Sp_Biom(1978-1,endyr-1) << endl;
+ projout <<Sp_Biom(1977+rec_age,endyr-1-rec_age)<< endl;
+ projout.close();
+	
+
 FUNCTION write_projout
 // Function to write out data file for projection model....
   ofstream projout( projfile_name );
@@ -3638,7 +3877,7 @@ FINAL_SECTION
   /** Final section to compute projection input and profiles (over F) */
   // Calc_Dependent_Vars();
   // write_proj();
-  write_projout();
+  // write_projout();
   // write_msy_out();
   Profile_F();
   Write_R();
@@ -3746,10 +3985,10 @@ FUNCTION compute_spr_rates
     F40(k) = F40_est * (Fratio(k));
     F35(k) = F35_est * (Fratio(k));
   }
-  cout << F50<<endl<<F40<<endl<<F35<<endl;
+  // cout << F50<<endl<<F40<<endl<<F35<<endl;
 
 FUNCTION void writerep(dvariable& tmp,adstring& tmpstring)
-  cout <<tmpstring<<endl<<endl;
+  // cout <<tmpstring<<endl<<endl;
   tmpstring = printf("3.5%f",value(tmp));
 
 FUNCTION dvariable SolveF2(const int& iyr, const dvar_vector& N_tmp, const double&  TACin)
@@ -4507,6 +4746,9 @@ FUNCTION Write_Datafile
 
 FUNCTION Write_R
   ofstream R_report("For_R.rep");
+  R_Report(phizero);
+  R_Report(B100);
+  R_Report(B100.sd);
   R_report<< "$repl_yld"<<endl<<repl_yld<<endl; 
   R_report<< "$repl_SSB"<<endl<<repl_SSB<<endl; 
   R_report<<"$M"<<endl; 
@@ -4522,7 +4764,7 @@ FUNCTION Write_R
     }
     R_report<<yrs_ind(k,nyrs_ind(k))<<" "<<pow(q_ind(k,nyrs_ind(k)),q_power_ind(k))<<endl;
   }
-  R_report<<"$M"<<endl; R_report<<natmort<<endl;
+  R_report<<"$M_equil"<<endl; R_report<<natmort<<endl;
   R_report<<"$SurvNextYr"<<endl; R_report<< pred_ind_nextyr <<endl;
   R_report<<"$Yr"<<endl; for (i=styr;i<=endyr;i++) R_report<<i<<" "; R_report<<endl;
   R_Report(P_age2len);
@@ -4605,6 +4847,8 @@ FUNCTION Write_R
     for (k=1;k<=nind;k++)
     {
       int ii=1;
+			double qtmp;
+			qtmp = value(q_ind(k,1));
       R_report <<endl<< "$Obs_Survey_"<< k <<""<< endl ;
       for (i=styr;i<=endyr;i++)
       {
@@ -4612,6 +4856,7 @@ FUNCTION Write_R
         {
           if (yrs_ind(k,ii)==i)
           {
+						qtmp = value(q_ind(k,ii));
             double PearsResid   =  value((obs_ind(k,ii)-pred_ind(k,ii))/obs_se_ind(k,ii) );
             double lnPearsResid =  value((log(obs_ind(k,ii))-log(pred_ind(k,ii)))/obs_lse_ind(k,ii) );
             R_report << i<< " "<< obs_ind(k,ii)   <<" "<< 
@@ -4621,17 +4866,26 @@ FUNCTION Write_R
                                   lnPearsResid    << endl; //values of survey index value (annual)
             ii++;
           }
-          // else
-            // R_report << i<< " -1 "<< " "<< pred_ind(k,i)<<" -1 "<<endl;
+          else
+          {
+             int iyr=i; 
+             double predtmp = value(qtmp * pow(elem_prod(natage(iyr),pow(S(iyr),ind_month_frac(k))) * 
+                              elem_prod(sel_ind(k,iyr) , wt_ind(k,iyr)),q_power_ind(k)) );
+            R_report << i<< " NA "<< " "<< predtmp <<" NA NA NA"<<endl;
+          }
         }
-        // else
-          // R_report << i<< " -1 "<< " "<< pred_ind(k,i)<<" -1 "<<endl;
+        else
+        {
+          int iyr=i; 
+          double predtmp = value(qtmp * pow(elem_prod(natage(iyr),pow(S(iyr),ind_month_frac(k))) * 
+                            elem_prod(sel_ind(k,iyr) , wt_ind(k,iyr)),q_power_ind(k)) );
+          R_report << i<< " NA "<< " "<< predtmp <<" NA NA NA"<<endl;
+        }
       }
       R_report   << endl;
       R_report << endl<< "$Index_Q_"<<k<<endl;
       R_report<< q_ind(k) << endl;
     }
-    // R_report <<" SDNR1 "<< wt_srv1*std_dev(elem_div((pred_srv1(yrs_srv1)-obs_srv1_biom),obs_srv1_se))<<endl;
     R_report   << endl;
     for (k=1;k<=nfsh;k++)
     {
@@ -4706,6 +4960,11 @@ FUNCTION Write_R
 
       } 
     }
+    for (k=1;k<=nind;k++)
+		{
+      R_report <<"$sdnr_ind_"<<k<<endl;
+			R_report << std_dev(elem_div((pred_ind(k)-obs_ind(k)),obs_se_ind(k)))<<endl;
+		}
     for (k=1;k<=nfsh;k++)
     {
       R_report << endl<< "$Obs_catch_"<<(k) << endl;
@@ -4938,6 +5197,11 @@ FUNCTION Write_R
   {
     if (nyrs_fsh_age(k)>0)
     {
+      R_report << "$Francis_wt_fsh_age_"<<k<<endl;
+      double fwtmp;
+      fwtmp = calc_Francis_weights(oac_fsh(k),eac_fsh(k),n_sample_fsh_age(k)) ;
+      R_report << fwtmp <<endl;
+      // cout << fwtmp <<endl;
       R_report <<"$EffN_Fsh_"<<(k)<<""<<endl;
       for (i=1;i<=nyrs_fsh_age(k);i++)
       {
@@ -4959,6 +5223,8 @@ FUNCTION Write_R
   {
     if (nyrs_fsh_length(k)>0)
     {
+      R_report << "$Francis_wt_fsh_len_"<<k<<endl;
+      R_report << calc_Francis_weights(olc_fsh(k),elc_fsh(k),n_sample_fsh_length(k)) <<endl;
       R_report <<"$EffN_Length_Fsh_"<<(k)<<""<<endl;
       for (i=1;i<=nyrs_fsh_length(k);i++)
       {
@@ -5003,6 +5269,8 @@ FUNCTION Write_R
   {
     if (nyrs_ind_age(k)>0)
     {
+      R_report << "$Francis_wt_ind_age_"<<k<<endl;
+      R_report << calc_Francis_weights(oac_ind(k),eac_ind(k),n_sample_ind_age(k)) <<endl;
       R_report <<"$EffN_Survey_"<<(k)<<""<<endl;
       for (i=1;i<=nyrs_ind_age(k);i++)
       {
@@ -5023,6 +5291,8 @@ FUNCTION Write_R
   {
     if (nyrs_ind_length(k)>0)
     {
+      R_report << "$Francis_wt_ind_len_"<<k<<endl;
+      R_report << calc_Francis_weights(olc_ind(k),elc_ind(k),n_sample_ind_length(k)) <<endl;
       R_report <<"$EffN_Length_Survey_"<<(k)<<""<<endl;
       for (i=1;i<=nyrs_ind_length(k);i++)
       {
@@ -5192,6 +5462,42 @@ FUNCTION double Eff_N(const dvector& pobs, const dvar_vector& phat)
   double vtmp;
   vtmp = value(norm2(rtmp)/size_count(rtmp));
   return 1./vtmp;
+
+ /**
+   * @brief Calculate Francis weights
+   * @details this code based on equation TA1.8 in Francis(2011) should be changed so separate weights if by sex
+   *
+   * Produces the new weight that should be used.
+  **/
+FUNCTION double calc_Francis_weights(const dmatrix oac, const dvar_matrix eac, const ivector sam )
+  {
+    int nobs;
+    int i1=oac.rowmin();
+    int i2=oac.rowmax();
+    double lfwt,Var,Pre,Obs;
+    dvector ages(oac.colmin(),nages);
+    for (int i=oac.colmin();i<=nages;i++) 
+      ages(i) = double(i)+.5;
+    nobs = oac.rowsize();
+    // cout <<nobs<<endl;
+    dvector resid(i1,i2);
+    resid.initialize();
+    for ( int i = i1; i <= i2; i++ )
+    {
+      // Obs = sum(elem_prod(oac(i), ages+.5));
+      Obs = oac(i) * (ages+.5);
+      // Pre = sum(elem_prod(value(eac(i)), ages+.5));
+      Pre = value(eac(i)) * (ages+.5);
+      Var = value(eac(i)) * square(ages+.5);
+      Var -= square(Pre);
+      resid(i) = (Obs - Pre) / sqrt(Var * 1.0 / (sam(i) ));
+      // cout<<Obs<<" "<<Pre<<" "<<Var<<" "<<resid(i)<<endl;
+    }
+    lfwt = 1.0 / (square(std_dev(resid)) * ((nobs - 1.0) / nobs * 1.0));
+    // lfwt(k) *= lf_lambda(k);
+    // cout <<"FWt "<<lfwt<<endl;
+    return lfwt;
+  }
 
 FUNCTION double Eff_N2_L(const dvector& pobs, const dvar_vector& phat)
   dvector av = len_bins  ;
