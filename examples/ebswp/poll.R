@@ -16,7 +16,7 @@ A = mod
 #mod16.0b <- readList("mod16.0b/For_R.rep")
 #lstOut1  <- list( "2017.Assessment"= modlyr, "Current.assessment"= mod16.0b)
 M <- list(mod)
-plot_bts(M)
+plot_bts(M,idx=2)
 #tab       <- cbind(lstOuts[[1]]$Like_Comp_names,do.call(cbind,lapply(lstOuts,function(x){round(x[["Like_Comp"]],2)})))
 #tab       <- cbind(lstOuts[[1]]$,do.call(cbind,lapply(lstOuts,function(x){round(x[["Like_Comp"]],2)})))
 #tt <- tibble( srv_sdnr = lstOuts %>% map("sdnr_ind_1"),
@@ -34,7 +34,7 @@ ggplot(rdf,aes(x=yr-1,y=R,fill=case)) + xlab("Year class") + ylab("Age 1 recruit
        geom_errorbar(aes(ymin=lb,ymax=ub),width=.3,colour="blue",position=dodge) + mytheme + geom_hline(aes(yintercept=mnR))
 #-------------------------------------------------------------------------------
 # Fit to survey data
-mdf <- .get_bts_df(M)
+mdf <- .get_bts_df(M,idx=2)
 mdf2 <- mdf[!is.na(mdf$obs),]
 ggplot(mdf,aes(x=year,y=pre)) + geom_line(width=2,color="blue") + .THEME + geom_point(data=mdf2,aes(x=year,y=obs),size=2,color="red") + expand_limits(y = 0) + 
                             geom_errorbar(data=mdf2,aes(x=year,ymax=ub,ymin=lb),width=.5) + ylab("Survey biomass (t)")+ xlab("Year") + 
