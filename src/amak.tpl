@@ -1230,7 +1230,7 @@ PARAMETER_SECTION
   init_bounded_vector_vector        sel50_ind(1,nind,1,n_sel_ch_ind,1,20,phase_logist_ind)
 
   init_vector_vector  logsel_dslope_ind(1,nind,1,n_sel_ch_ind,phase_dlogist_ind) // Need to make positive or reparameterize
-  init_bounded_vector_vector seld50_ind(1,nfsh,1,n_sel_ch_ind,lb_d50,nages,phase_dlogist_ind)
+  init_bounded_vector_vector seld50_ind(1,nind,1,n_sel_ch_ind,lb_d50,nages,phase_dlogist_ind)
 
   matrix                sel_slope_ind(1,nind,1,n_sel_ch_ind)
   matrix                sel_dslope_ind(1,nind,1,n_sel_ch_ind)
