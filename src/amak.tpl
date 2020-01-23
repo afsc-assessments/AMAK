@@ -472,14 +472,24 @@ DATA_SECTION
   ivector   fsh_sel_opt(1,nfsh)
   ivector phase_sel_fsh(1,nfsh)
   vector   curv_pen_fsh(1,nfsh)
+
   matrix   sel_slp_in_fsh(1,nfsh,1,nyrs)
   matrix   logsel_slp_in_fsh(1,nfsh,1,nyrs)
   matrix   sel_inf_in_fsh(1,nfsh,1,nyrs)
   vector   logsel_slp_in_fshv(1,nfsh)
   vector   sel_inf_in_fshv(1,nfsh)
-  vector   logsel_dslp_in_fshv(1,nfsh)
-  vector   sel_dinf_in_fshv(1,nfsh)
-  matrix   sel_dslp_in_fsh(1,nfsh,1,nyrs)
+
+  matrix   logsel_p1_in_fsh(1,nfsh,1,nyrs)
+  vector   logsel_p1_in_fshv(1,nfsh)
+  matrix   sel_p1_in_fsh(1,nfsh,1,nyrs)
+
+  matrix   sel_p2_in_fsh(1,nfsh,1,nyrs)
+  vector   sel_p2_in_fshv(1,nfsh)
+
+  matrix   logsel_p3_in_fsh(1,nfsh,1,nyrs)
+  vector   logsel_p3_in_fshv(1,nfsh)
+  matrix   sel_p3_in_fsh(1,nfsh,1,nyrs)
+
   matrix   logsel_dslp_in_fsh(1,nfsh,1,nyrs)
   matrix   sel_dinf_in_fsh(1,nfsh,1,nyrs)
 
@@ -545,9 +555,9 @@ DATA_SECTION
  LOCAL_CALCS
   logsel_slp_in_fshv.initialize();
   sel_inf_in_fshv.initialize();
-  logsel_dslp_in_fshv.initialize();
-  sel_inf_in_fshv.initialize();
-  sel_dinf_in_fshv.initialize();
+  logsel_p1_in_fshv.initialize();
+  sel_p2_in_fshv.initialize();
+  logsel_p3_in_fshv.initialize();
 
   sel_inf_in_indv.initialize();
   logsel_dslp_in_indv.initialize();
@@ -572,10 +582,10 @@ DATA_SECTION
   sel_inf_in_fsh.initialize()   ;  // ji
   sel_inf_in_ind.initialize()   ;  // ji
   logsel_slp_in_fsh.initialize();  // ji
-  logsel_slp_in_fshv.initialize();  // ji
+  logsel_slp_in_fshv.initialize(); // ji
   logsel_dslp_in_fsh.initialize(); // ji
   logsel_slp_in_ind.initialize();  // ji
-  logsel_slp_in_indv.initialize();  // ji
+  logsel_slp_in_indv.initialize(); // ji
   logsel_dslp_in_ind.initialize(); // ji
   sel_change_in_fsh.initialize()   ;  
   for (k=1;k<=nfsh;k++)
@@ -668,7 +678,49 @@ DATA_SECTION
       }
       case 3 : // Double logistic 
       {
-        write_input_log << "Double logistic abandoned..."<<endl;exit(1);
+        *(ad_comm::global_datafile) >> nselages_in_fsh(k)   ;  
+        *(ad_comm::global_datafile) >> phase_sel_fsh(k);  
+        *(ad_comm::global_datafile) >>  n_sel_ch_fsh(k) ;  
+        n_sel_ch_fsh(k) +=1;
+        yrs_sel_ch_fsh(k,1) = styr;
+        for (int i=2;i<=n_sel_ch_fsh(k);i++)
+          *(ad_comm::global_datafile) >>  yrs_sel_ch_fsh(k,i) ;  
+        for (int i=2;i<=n_sel_ch_fsh(k);i++)
+          *(ad_comm::global_datafile) >>  sel_sigma_fsh(k,i) ;  
+        // This to read in pre-specified selectivity values...
+        *(ad_comm::global_datafile) >> sel_p1_in_fsh(k,1) ; // asc inflection
+        *(ad_comm::global_datafile) >> sel_p2_in_fsh(k,1) ; // ages to 95% selected (added to p1
+        *(ad_comm::global_datafile) >> sel_p3_in_fsh(k,1) ; // ages to desc infl
+
+        // Put initial param scale here logsel_slp_in_fsh(k,1)   = log(sel_slp_in_fsh(k,1)) ;
+        for (int jj=2;jj<=n_sel_ch_fsh(k);jj++) 
+        {
+          sel_p1_in_fsh(k,jj)    =     sel_p1_in_fsh(k,1) ;
+          sel_p2_in_fsh(k,jj)    =     sel_p2_in_fsh(k,1) ;
+          sel_p3_in_fsh(k,jj)    =     sel_p3_in_fsh(k,1) ;
+        }
+        logsel_p1_in_fsh(k) =  log(sel_p1_in_fsh(k)) ;
+        logsel_p3_in_fsh(k) =  log(sel_p3_in_fsh(k)) ;
+
+        log_input(phase_sel_fsh(k));
+        log_input(n_sel_ch_fsh(k));
+        log_input(sel_p1_in_fsh(k)(1,n_sel_ch_fsh(k)));
+        log_input(sel_p2_in_fsh(k)(1,n_sel_ch_fsh(k)));
+        log_input(sel_p3_in_fsh(k)(1,n_sel_ch_fsh(k)));
+        log_input(yrs_sel_ch_fsh(k)(1,n_sel_ch_fsh(k)));
+
+        phase_selcoff_fsh(k) = -1;
+        phase_logist_fsh(k)  = -1;
+        phase_dlogist_fsh(k) = phase_sel_fsh(k);
+        phase_sel_spl_fsh(k) = -1;
+
+        logsel_p1_in_fshv(k) = logsel_p1_in_fsh(k,1);
+           sel_p2_in_fshv(k) =    sel_p2_in_fsh(k,1);
+        logsel_p3_in_fshv(k) = logsel_p3_in_fsh(k,1);
+
+        logsel_slp_in_fshv(k) = logsel_slp_in_fsh(k,1);
+           sel_inf_in_fshv(k) =    sel_inf_in_fsh(k,1);
+        write_input_log << "Double logistic read in..."<<endl;
         break;
       }
       case 4 : // Splines         
@@ -1168,10 +1220,16 @@ PARAMETER_SECTION
   init_vector_vector logsel_slope_fsh(1,nfsh,1,n_sel_ch_fsh,phase_logist_fsh)
   matrix                sel_slope_fsh(1,nfsh,1,n_sel_ch_fsh)
   init_vector_vector     sel50_fsh(1,nfsh,1,n_sel_ch_fsh,phase_logist_fsh)
-  init_vector_vector logsel_dslope_fsh(1,nfsh,1,n_sel_ch_fsh,phase_dlogist_fsh)
-  matrix                sel_dslope_fsh(1,nfsh,1,n_sel_ch_fsh)
-  !! int lb_d50=nages/2;
-  init_bounded_vector_vector     seld50_fsh(1,nfsh,1,n_sel_ch_fsh,lb_d50,nages,phase_dlogist_fsh)
+	// Case 3 double logistic, 3 parameter
+  init_vector_vector logsel_p1_fsh(1,nfsh,1,n_sel_ch_fsh,phase_dlogist_fsh)
+  matrix                sel_p1_fsh(1,nfsh,1,n_sel_ch_fsh)
+  init_vector_vector    sel_p2_fsh(1,nfsh,1,n_sel_ch_fsh,phase_dlogist_fsh)
+  init_vector_vector logsel_p3_fsh(1,nfsh,1,n_sel_ch_fsh,phase_dlogist_fsh)
+  matrix                sel_p3_fsh(1,nfsh,1,n_sel_ch_fsh)
+  // init_vector_vector logsel_dslope_fsh(1,nfsh,1,n_sel_ch_fsh,phase_dlogist_fsh)
+  // matrix                sel_dslope_fsh(1,nfsh,1,n_sel_ch_fsh)
+   !! int lb_d50=nages/2;
+  // init_bounded_vector_vector     seld50_fsh(1,nfsh,1,n_sel_ch_fsh,lb_d50,nages,phase_dlogist_fsh)
 
   // !!exit(1);
   3darray log_sel_fsh(1,nfsh,styr,endyr,1,nages)
@@ -1438,8 +1496,6 @@ INITIALIZATION_SECTION
   steepness steepnessprior
   log_sigmar log_sigmarprior;
 
-
-
   log_Rzero    R_guess;
   mean_log_rec R_guess;
   
@@ -1455,8 +1511,11 @@ INITIALIZATION_SECTION
 
   sel50_fsh sel_inf_in_fshv 
 
-  logsel_dslope_fsh logsel_dslp_in_fshv ;
-  seld50_fsh sel_dinf_in_fshv 
+  // logsel_dslope_fsh logsel_dslp_in_fshv ;
+  // seld50_fsh sel_dinf_in_fshv 
+  logsel_p1_fsh   logsel_p1_in_fshv ;
+  sel_p2_fsh         sel_p2_in_fshv ;
+  logsel_p3_fsh   logsel_p3_in_fshv ;
 
   logsel_slope_ind logsel_slp_in_indv ;
   sel50_ind sel_inf_in_indv ;
@@ -1464,7 +1523,7 @@ INITIALIZATION_SECTION
   logsel_dslope_ind logsel_dslp_in_indv ;
   seld50_ind sel_dinf_in_indv ;
 
- //+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==
+ //+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+=+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==
 PROCEDURE_SECTION
   fpen.initialize();
   for (k=1;k<=nind;k++) 
@@ -1748,34 +1807,33 @@ FUNCTION Get_Selectivity
     break;
     case 3 : // Double logistic
     {
-      sel_slope_fsh(k)  = mfexp(logsel_slope_fsh(k));
-      sel_dslope_fsh(k) = mfexp(logsel_dslope_fsh(k));
+      sel_p1_fsh(k)  = mfexp(logsel_p1_fsh(k));
+      sel_p3_fsh(k)  = mfexp(logsel_p3_fsh(k));
       int isel_ch_tmp = 1 ;
-      dvariable sel_slope_tmp = sel_slope_fsh(k,isel_ch_tmp);
-      dvariable sel50_tmp     = sel50_fsh(k,isel_ch_tmp);
-      dvariable sel_dslope_tmp = sel_dslope_fsh(k,isel_ch_tmp);
-      dvariable seld50_tmp     = seld50_fsh(k,isel_ch_tmp);
+      dvariable p1 = sel_p1_fsh(k,isel_ch_tmp);
+      dvariable p2 = sel_p2_fsh(k,isel_ch_tmp);
+      dvariable p3 = sel_p3_fsh(k,isel_ch_tmp);
+			dvariable i1 = p1 + p2;
+			dvariable i2 = p1 + i1 + p3;
       for (i=styr;i<=endyr;i++)
       {
         if (i==yrs_sel_ch_fsh(k,isel_ch_tmp)) 
         {
-          sel_slope_tmp  = sel_slope_fsh(k,isel_ch_tmp);
-          sel50_tmp      =     sel50_fsh(k,isel_ch_tmp);
-          sel_dslope_tmp = sel_dslope_fsh(k,isel_ch_tmp);
-          seld50_tmp     =     seld50_fsh(k,isel_ch_tmp);
+          p1 = sel_p1_fsh(k,isel_ch_tmp);
+          p2 = sel_p2_fsh(k,isel_ch_tmp);
+          p3 = sel_p3_fsh(k,isel_ch_tmp);
+			    i1 = p1 + p2;
+			    i2 = p1 + i1 + p3;
           if (isel_ch_tmp<n_sel_ch_fsh(k))
             isel_ch_tmp++;
         }
-        log_sel_fsh(k,i)(1,nselages_fsh(k))     =
-                     -log( 1.0 + mfexp(-1.*sel_slope_tmp * 
-                     ( age_vector(1,nselages_fsh(k)) - sel50_tmp) ))+
-                     log( 1. - 1/(1.0 + mfexp(-sel_dslope_tmp * 
-                     ( age_vector(1,nselages_fsh(k)) - seld50_tmp))) );
+        log_sel_fsh(k,i)(1,nselages_fsh(k))     = ( -log(1.0 + mfexp(-2.9444389792/p1 * ( age_vector(1,nselages_fsh(k)) - i1) )) +
+               log(1. - 1./(1.0 + mfexp(-2.9444389792/p3 * ( age_vector(1,nselages_fsh(k)) - i2))) ) )+0.102586589 ; // constant at end is log(0.95*0.95)
 
-        log_sel_fsh(k,i)(nselages_fsh(k),nages) = 
-                     log_sel_fsh(k,i,nselages_fsh(k));
-
-        log_sel_fsh(k,i) -= max(log_sel_fsh(k,i));  
+			// cout << p1 << " "<<p2<<" "<<p3<<endl<<i1<<" "<<i2<<endl<<age_vector<<endl<<sel_fsh(k,i)<<endl;exit(1);
+  // OjO, still has nselages as part of configuration option...
+        log_sel_fsh(k,i)(nselages_fsh(k),nages) = log_sel_fsh(k,i,nselages_fsh(k));
+        // sel_fsh(k,i) /= 0.9025 ; // Simply 95th %ile squared as normalizing  
       }
     }
     break;
@@ -2353,13 +2411,19 @@ FUNCTION Sel_Like
   sel_like_ind.initialize();
   for (k=1;k<=nfsh;k++)
   {
-    if (active(logsel_slope_fsh(k)))
+    if (active(logsel_p1_fsh(k))||active(logsel_slope_fsh(k)))
     {
+      sel_like_fsh(k,3)    += square( logsel_p1_fsh(k,1) )  ;
+      sel_like_fsh(k,3)    += square(    sel_p2_fsh(k,1) )  ;
+      sel_like_fsh(k,3)    += square( logsel_p3_fsh(k,1) )  ;
       for (i=2;i<=n_sel_ch_fsh(k);i++)
       {
           int iyr = yrs_sel_ch_fsh(k,i) ;
           dvariable var_tmp = square(sel_sigma_fsh(k,i));
           sel_like_fsh(k,2)    += .5*norm2( log_sel_fsh(k,iyr-1) - log_sel_fsh(k,iyr) ) / var_tmp ;
+          sel_like_fsh(k,3)    += square( logsel_p1_fsh(k,i) )  ;
+          sel_like_fsh(k,3)    += square(    sel_p2_fsh(k,i) )  ;
+          sel_like_fsh(k,3)    += square( logsel_p3_fsh(k,i) )  ;
       }
     }
 
@@ -4747,6 +4811,9 @@ FUNCTION Write_Datafile
 
 FUNCTION Write_R
   ofstream R_report("For_R.rep");
+  R_Report(sel_p1_fsh(1));
+  R_Report(sel_p2_fsh(1));
+  R_Report(sel_p3_fsh(1));
   R_Report(phizero);
   R_Report(B100);
   R_Report(B100.sd);
