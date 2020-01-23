@@ -2413,17 +2413,18 @@ FUNCTION Sel_Like
   {
     if (active(logsel_p1_fsh(k))||active(logsel_slope_fsh(k)))
     {
-      sel_like_fsh(k,3)    += square( logsel_p1_fsh(k,1) )  ;
-      sel_like_fsh(k,3)    += square(    sel_p2_fsh(k,1) )  ;
-      sel_like_fsh(k,3)    += square( logsel_p3_fsh(k,1) )  ;
+      sel_like_fsh(k,3)    += .1*square( logsel_p1_fsh(k,1) )  ;
+      sel_like_fsh(k,3)    += .1*square(    sel_p2_fsh(k,1) )  ;
+      sel_like_fsh(k,3)    += .1*square( logsel_p3_fsh(k,1) )  ;
       for (i=2;i<=n_sel_ch_fsh(k);i++)
       {
           int iyr = yrs_sel_ch_fsh(k,i) ;
           dvariable var_tmp = square(sel_sigma_fsh(k,i));
+
           sel_like_fsh(k,2)    += .5*norm2( log_sel_fsh(k,iyr-1) - log_sel_fsh(k,iyr) ) / var_tmp ;
-          sel_like_fsh(k,3)    += square( logsel_p1_fsh(k,i) )  ;
-          sel_like_fsh(k,3)    += square(    sel_p2_fsh(k,i) )  ;
-          sel_like_fsh(k,3)    += square( logsel_p3_fsh(k,i) )  ;
+          sel_like_fsh(k,3)    += .1*square( logsel_p1_fsh(k,i) )  ;
+          sel_like_fsh(k,3)    += .1*square(    sel_p2_fsh(k,i) )  ;
+          sel_like_fsh(k,3)    += .1*square( logsel_p3_fsh(k,i) )  ;
       }
     }
 

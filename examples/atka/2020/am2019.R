@@ -1,20 +1,21 @@
 R
 rm(list=ls())
 ls()
-source("R/prelims.R")
+source("../R/prelims.R")
 .THEME=mytheme
 #-------------------------------------------------------------------------------
 # Visual compare runs
 #-------------------------------------------------------------------------------
 library(ggridges)
 
-source("R/compareRuns.r")
+source("../R/compareRuns.r")
 
 #        Read in the output of the assessment
-modlyr   <- readList("../2018/mod16.0b/For_R.rep")
+modlyr   <- readList("../2019/mod16.0b/For_R.rep")
 #modlyr   <- readList("../2017/mod16.0b/For_R.rep")
-mod16.0b <- readList("mod16b/For_R.rep")
-lstOut1  <- list( "2018.Assessment"= modlyr, "Current.assessment"= mod16.0b)
+m0  <- readList("../mod16b/For_R.rep")
+m1       <- readList("For_R.rep")
+lstOut1  <- list( "2019.Assessment"= mod16.0b, "Current.assessment"= m1)
 M <- lstOut1
 plot_bts(M[2])
 modlyr$Obs_Survey_1
@@ -96,7 +97,8 @@ dt[variable!="ub"&variable!="lb"] %>% ggplot(aes(x=Year,y=value,col=variable)) +
             geom_line(data=)
 #-------------------------------------------------------------------------------
 #Selectivity
-df <- data.frame(modlyr$sel_fsh_1[,2:13] ); names(df) <- c("yr",1:11)
+df <- data.frame(m0$sel_fsh_1[,2:13] ); names(df) <- c("yr",1:11)
+df <- data.frame(m1$sel_fsh_1[,2:13] ); names(df) <- c("yr",1:11)
 sdf <- gather(df,age,sel,2:12) %>% filter(yr>1976) %>% mutate(age=as.numeric(age)) #+ arrange(age,yr)
 ggplot(sdf,aes(x=age,y=as.factor(yr),height = sel)) + geom_density_ridges(stat = "identity",scale = 5.8, alpha = .2)+ xlim(c(1,11))+ mytheme + ylab("Year") + xlab("Age (years)") #+ theme_ridges()  
 
