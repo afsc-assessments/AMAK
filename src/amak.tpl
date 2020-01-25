@@ -1178,7 +1178,7 @@ PARAMETER_SECTION
   init_number log_Rzero(phase_Rzero)  
   // OjO
   // init_bounded_vector initage_dev(2,nages,-15,15,4)
-  init_bounded_vector rec_dev(styr_rec,endyr,-25,25,2)
+  init_bounded_vector rec_dev(styr_rec,endyr,-15,15,2)
   // init_vector rec_dev(styr_rec,endyr,2)
   init_number log_sigmar(phase_sigmar);
   number m_sigmarsq  
@@ -2326,18 +2326,17 @@ FUNCTION Rec_Like
         rec_like(1) = .1*(SSQRec+ m_sigmarsq/2.)/(2*sigmarsq) + nrecs_est*log_sigmar; 
     }
 
+    // Variance term for the parts not estimated by sr curve
     if (last_phase())
     {
-      // Variance term for the parts not estimated by sr curve
       rec_like(4) += .5*norm2( rec_dev(styr_rec,styr_rec_est) )/sigmarsq + (styr_rec_est-styr_rec)*log(sigmar) ; 
-
       if ( endyr > endyr_rec_est)
         rec_like(4) += .5*norm2( rec_dev(endyr_rec_est,endyr  ) )/sigmarsq + (endyr-endyr_rec_est)*log(sigmar) ; 
     }
     else // JNI comment next line
-       rec_like(2) += norm2( rec_dev(styr_rec_est,endyr) ) ;
+       rec_like(2) += norm2( rec_dev(styr_rec,endyr) ) ;
 
-    rec_like(2) += norm2( rec_dev(styr_rec_est,endyr) ) ;
+    // rec_like(2) += norm2( rec_dev(styr_rec_est,endyr) ) ;
 
     if (active(rec_dev_future))
     {
@@ -2410,18 +2409,18 @@ FUNCTION Sel_Like
   {
     if (active(logsel_p1_fsh(k))||active(logsel_slope_fsh(k)))
     {
-      sel_like_fsh(k,3)    += .01*square( logsel_p1_fsh(k,1) )  ;
-      sel_like_fsh(k,3)    += .01*square(    sel_p2_fsh(k,1) )  ;
-      sel_like_fsh(k,3)    += .01*square( logsel_p3_fsh(k,1) )  ;
+      sel_like_fsh(k,3)    += .1*square( logsel_p1_fsh(k,1) )  ;
+      sel_like_fsh(k,3)    += .1*square(    sel_p2_fsh(k,1) )  ;
+      sel_like_fsh(k,3)    += .1*square( logsel_p3_fsh(k,1) )  ;
       for (i=2;i<=n_sel_ch_fsh(k);i++)
       {
           int iyr = yrs_sel_ch_fsh(k,i) ;
           dvariable var_tmp = square(sel_sigma_fsh(k,i));
 
           sel_like_fsh(k,2)    += .5*norm2( log_sel_fsh(k,iyr-1) - log_sel_fsh(k,iyr) ) / var_tmp ;
-          sel_like_fsh(k,3)    += .01*square( logsel_p1_fsh(k,i) )  ;
-          sel_like_fsh(k,3)    += .01*square(    sel_p2_fsh(k,i) )  ;
-          sel_like_fsh(k,3)    += .01*square( logsel_p3_fsh(k,i) )  ;
+          sel_like_fsh(k,3)    += .1*square( logsel_p1_fsh(k,i) )  ;
+          sel_like_fsh(k,3)    += .1*square(    sel_p2_fsh(k,i) )  ;
+          sel_like_fsh(k,3)    += .1*square( logsel_p3_fsh(k,i) )  ;
       }
     }
 
