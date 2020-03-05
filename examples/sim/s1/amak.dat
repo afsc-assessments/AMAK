@@ -29,7 +29,6 @@ OM_1
 # NEW npars_mage
 0
 # NEW Mage_in
-#0.2 0.2 0.2 0.2 0.2 0.2 0.2 0.2 0.2 0.2 0.2 0.2
 # phase_Mage
 -5
 #Nyrs_Random_walk_M 
@@ -61,7 +60,7 @@ OM_1
 #Fsh_selopt_1 
 2  
 #Fsh_ph_1 
--5  
+5  
 #Fsh_sel_change_1 
 0
 #slope 
