@@ -245,8 +245,10 @@ to the reference model. In summary, the following lists the models presented and
 
 3. **Fit survey**: an exploratory scenario that's the same as the reference model except the NMFS trawl survey is up-weighted 
 4. by
-   $\lambda^\text{NMFS}=$ `r #M[[5]]$cpue_lambda[1]` and the ADF&G pot survey is 
-   up-weighted by $\lambda^\text{ADFG}=$ `r #M[[5]]$cpue_lambda[2]`. 
+   $\lambda^\text{NMFS}=$ `r #M[[5]]$cpue_lambda[1]` 
+   and the ADF&G pot survey is 
+   up-weighted by $\lambda^\text{ADFG}=$ 
+   `r #M[[5]]$cpue_lambda[2]`. 
 
 Note that SSC convention would label these (item 3 above) as model 16.0 (the
 model first developed in that year). Since only a few models are presented here, for simplicity
