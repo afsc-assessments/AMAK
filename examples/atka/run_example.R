@@ -11,9 +11,11 @@ set.seed(352)
 seeds <- sample(1:1e4, size=chains)
 chains
 
-m <- './amak'
+m <- 'amak'
 d <- 'ws1'
 setwd(d)
+file.copy('../../../src/amak.tpl', 'amak.tpl')
+system(paste('admb ',m))
 system(paste(m, '-nox -iprint 200 -mcmc 10'))
 setwd('..')
 
@@ -29,8 +31,8 @@ launch_shinyadmb(test)
 
 
 ## Now with more thinning
-thin <- 20
-iter <- 5000*thin
+thin <- 10
+iter <- 1000*thin
 fit <- sample_admb(model=m, path=d, iter=iter, algorithm='RWM', warmup=iter/4,
                     seeds=seeds, chains=chains, thin=thin,
                     parallel=TRUE, cores=chains)
@@ -54,7 +56,8 @@ pairs_admb(fit=fit, pars=fast)
 
 ### Explore using NUTS
 setwd(d)
-system(paste(m, '-nox -iprint 200 -mcmc 10 -hbf 1'))
+getwd()
+system(paste0(m, ' -binp ',m,'.bar -nox -iprint 200 -mcmc 10 -hbf 1'))
 setwd('..')
 
 ## Never thin NUTS and use 500-1000 iterations per chain w/

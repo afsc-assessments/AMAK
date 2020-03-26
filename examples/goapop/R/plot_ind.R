@@ -66,9 +66,9 @@ plot_ind <- function(M, xlab = "Year", ylab = "Index ", xlim=c(1980,2019), ylim 
             geom_errorbar(aes(x = year, ymax = ub, ymin = lb))
     }
     
-    if(!.OVERLAY) 
-        p <- p + facet_grid( Model~Index,scales="free") + guides(colour=FALSE)
+    #if(!.OVERLAY) 
         #p <- p + facet_wrap(~Model) + guides(colour=FALSE)
+        p <- p + facet_grid( Index~Model,scales="free") + guides(colour=FALSE)
         #p <- p + ylim(0,3e6)        
     print(p + .THEME)
 }
