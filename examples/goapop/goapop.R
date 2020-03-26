@@ -25,6 +25,7 @@ psel <- function(M,title="") {
   ggplot(sdf,aes(x=age,y=as.factor(yr),height = sel)) + geom_density_ridges(stat = "identity",scale = 5.8, alpha = .2,color="blue",fill="yellow",size=.5)+ xlim(c(1,21))+ ylab("Year") + xlab("Age (years)") + scale_y_discrete(limits=rev(levels(as.factor(sdf$yr)))) + theme_few() + ggtitle(title)
 }
 psel(p0,title="Hulson, blocks")
+psel(m1,title="nonP, blocks")
 psel(m2,title="3pDL, blocks")
 psel(m3,title="3pDL, 2-year")
 
@@ -34,10 +35,10 @@ ssb.mle <- ssb.mle %>% filter(Year > 1990, Year<2020)
 
  ssb.pop <- data.frame(p0$SSB,model="POP")
  ssb.mle    <- data.frame(m2$SSB,model="AMAK")
-ssb <- rbind(ssb.mle,ssb.parsel)
+ssb <- rbind(ssb.mle,ssb.pop)
 ssb <- rbind(ssb.mle)
-names(ssb) <- c("Year","SSB", "SD","LB","UB")
-ggplot(ssb,aes(x=Year,y=SSB, ymin=LB,ymax=UB)) + geom_ribbon( alpha = .3) + xlab("Year") + theme_few()
+names(ssb) <- c("Year","SSB", "SD","LB","UB","Model")
+ggplot(ssb,aes(x=Year,y=SSB, ymin=LB,ymax=UB,fill=Model)) + geom_ribbon( alpha = .3) + xlab("Year") + theme_few()
 
 
 lstOut1  <- list( "base"= m0, "param1"=m1,"parametric"= m2)
@@ -96,13 +97,13 @@ names(rdf) <- c("yr","R","se","lb","ub","case")
 rdf  <- rdf %>% filter(yr>1970,yr<2020)
 mnR <- mean(m2$R)
 dodge <- position_dodge(width=0.8)
-ggplot(rdf,aes(x=yr-1,y=R,fill=case)) + xlab("Year class") + ylab("Age 1 recruits (thousands)") + 
+ggplot(rdf,aes(x=yr-1,y=R,fill=case)) + xlab("Year class") + ylab("Age 2 recruits (thousands)") + 
        geom_bar(width=0.75,position="dodge",stat="identity",color="black") + 
        scale_x_continuous(breaks=seq(1970,2019,5)) +
        geom_errorbar(aes(ymin=lb,ymax=ub),width=.3,colour="blue",position=dodge) + theme_few() + geom_hline(aes(yintercept=mnR))
-source("../plot_ind.R")
-plot_ind(M)
-
+source("R/plot_ind.R")
+lstOut1  <- list( "NonParSel"= m1, "3PdL blocks"=m2,"3PdL, 2-yr"= m3)
+plot_ind(lstOut1)
 
 
 #===========MCMC-----------------------
