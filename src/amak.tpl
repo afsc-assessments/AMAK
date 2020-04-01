@@ -1,4 +1,4 @@
-///////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////
 // AMAK--              
 // Naming Conventions:
 //
@@ -55,7 +55,7 @@
 //////////////////////////////////////////////////////////////////////////////
 
 DATA_SECTION
-  !!version_info+="AMAK;Jan 2020";
+  !!version_info+="AMAK;Mar 2020";
   int iseed 
   !! iseed=1313;
   int cmp_no // candidate management procedure
@@ -146,7 +146,7 @@ DATA_SECTION
   !! nyrs          = endyr - styr + 1;
   int mc_count;
   !!  mc_count=0;
-  !! styr_rec = (styr - nages) + 1;     // First year of recruitment
+  !! styr_rec = (styr - nages) ;     // First year of recruitment
   !! styr_sp  = styr_rec - rec_age - 1 ;    // First year of spawning biomass  
   vector yy(styr,endyr);
   !! yy.fill_seqadd(styr,1) ;
@@ -407,7 +407,7 @@ DATA_SECTION
 
   // time-varying M
   init_int    phase_rw_M
-  init_int npars_rw_M
+  init_int    npars_rw_M
   init_ivector  yrs_rw_M(1,npars_rw_M);
   init_vector sigma_rw_M(1,npars_rw_M)
  LOCAL_CALCS
@@ -506,20 +506,26 @@ DATA_SECTION
 
   ivector   ind_sel_opt(1,nind)
   ivector phase_sel_ind(1,nind)
-
   vector   curv_pen_ind(1,nind)
-
+  matrix   sel_slp_in_ind(1,nind,1,nyrs)
   matrix   logsel_slp_in_ind(1,nind,1,nyrs)
   matrix   sel_inf_in_ind(1,nind,1,nyrs)
-  matrix   sel_dslp_in_ind(1,nind,1,nyrs)
-  matrix   logsel_dslp_in_ind(1,nind,1,nyrs)
-  matrix   sel_dinf_in_ind(1,nind,1,nyrs)
-  matrix   sel_slp_in_ind(1,nind,1,nyrs)
-
   vector   logsel_slp_in_indv(1,nind)
   vector   sel_inf_in_indv(1,nind)
-  vector   logsel_dslp_in_indv(1,nind)
-  vector   sel_dinf_in_indv(1,nind)
+  
+  matrix   logsel_p1_in_ind(1,nind,1,nyrs)
+  vector   logsel_p1_in_indv(1,nind)
+  matrix   sel_p1_in_ind(1,nind,1,nyrs)
+
+  matrix   sel_p2_in_ind(1,nind,1,nyrs)
+  vector   sel_p2_in_indv(1,nind)
+
+  matrix   logsel_p3_in_ind(1,nind,1,nyrs)
+  vector   logsel_p3_in_indv(1,nind)
+  matrix   sel_p3_in_ind(1,nind,1,nyrs)
+  
+  matrix   logsel_dslp_in_ind(1,nind,1,nyrs)
+  matrix   sel_dinf_in_ind(1,nind,1,nyrs)
 
 
   vector seldec_pen_ind(1,nind) ;
@@ -558,10 +564,15 @@ DATA_SECTION
   sel_p2_in_fshv.initialize();
   logsel_p3_in_fshv.initialize();
 
+  logsel_slp_in_indv.initialize();
   sel_inf_in_indv.initialize();
-  logsel_dslp_in_indv.initialize();
-  sel_inf_in_indv.initialize();
-  sel_dinf_in_indv.initialize();
+  logsel_p1_in_indv.initialize();
+  sel_p2_in_indv.initialize();
+  logsel_p3_in_indv.initialize();
+  
+  //logsel_dslp_in_indv.initialize();
+  //sel_inf_in_indv.initialize();
+  //sel_dinf_in_indv.initialize();
 
   phase_selcoff_ind.initialize();
   phase_logist_ind.initialize();
@@ -575,6 +586,7 @@ DATA_SECTION
   // nselages_in_ind.initialize()   ;  
   nselages_in_fsh = nages-1;
   nselages_in_ind = nages-1;
+  sel_change_in_fsh.initialize()   ; 
   sel_change_in_ind.initialize()   ;  
   sel_slp_in_fsh.initialize()   ;  // ji
   sel_slp_in_ind.initialize()   ;  // ji
@@ -586,7 +598,7 @@ DATA_SECTION
   logsel_slp_in_ind.initialize();  // ji
   logsel_slp_in_indv.initialize(); // ji
   logsel_dslp_in_ind.initialize(); // ji
-  sel_change_in_fsh.initialize()   ;  
+   
   for (k=1;k<=nfsh;k++)
   {
     *(ad_comm::global_datafile) >> fsh_sel_opt(k)  ;  
@@ -832,7 +844,68 @@ DATA_SECTION
       break;
       case 3 : // Double logistic 
       {
-        write_input_log << "Double logistic abandoned..."<<endl;exit(1);
+        *(ad_comm::global_datafile) >> nselages_in_ind(k); 
+        *(ad_comm::global_datafile) >> phase_sel_ind(k);  
+        *(ad_comm::global_datafile) >>  n_sel_ch_ind(k) ;  
+        n_sel_ch_ind(k) +=1;
+        yrs_sel_ch_ind(k,1) = styr; // first year always estimated
+        yrs_sel_ch_tmp_ind(k,1) = styr;
+        for (int i=2;i<=n_sel_ch_ind(k);i++)
+          *(ad_comm::global_datafile) >>  yrs_sel_ch_ind(k,i) ;  
+        for (int i=2;i<=n_sel_ch_ind(k);i++)
+          *(ad_comm::global_datafile) >>  sel_sigma_ind(k,i) ;  
+        sel_change_in_ind(k,styr)=1.; 
+        // This to read in pre-specified selectivity values...
+       // Number of selectivity changes is equal to the number of vectors (yr 1 is baseline)
+        for (int i=styr+1;i<=endyr;i++) { if(sel_change_in_ind(k,i)>0) { j++; yrs_sel_ch_tmp_ind(k,j) = i; } }
+        *(ad_comm::global_datafile) >> sel_p1_in_ind(k,1) ; // asc inflection
+        *(ad_comm::global_datafile) >> sel_p2_in_ind(k,1) ; // ages to 95% selected (added to p1
+        *(ad_comm::global_datafile) >> sel_p3_in_ind(k,1) ; // ages to desc infl
+        
+        for (int jj=2;jj<=n_sel_ch_ind(k);jj++) 
+        {
+          sel_p1_in_ind(k,jj)    =     sel_p1_in_ind(k,1) ;
+          sel_p2_in_ind(k,jj)    =     sel_p2_in_ind(k,1) ;
+          sel_p3_in_ind(k,jj)    =     sel_p3_in_ind(k,1) ;
+        }
+        logsel_p1_in_ind(k) =  log(sel_p1_in_ind(k)) ;
+        logsel_p3_in_ind(k) =  log(sel_p3_in_ind(k)) ;
+
+        log_input(indname(k));
+        log_input(nselages_in_ind(k));
+        log_input(phase_sel_ind(k));
+        log_input(sel_change_in_ind(k));
+        log_input(n_sel_ch_ind(k));
+        log_input(sel_p1_in_ind(k)(1,n_sel_ch_ind(k)));
+        log_input(sel_p2_in_ind(k)(1,n_sel_ch_ind(k)));
+        log_input(sel_p3_in_ind(k)(1,n_sel_ch_ind(k)));
+        log_input(yrs_sel_ch_ind(k)(1,n_sel_ch_ind(k)));
+        
+        // This to read in pre-specified selectivity values...
+        //*(ad_comm::global_datafile) >> sel_slp_in_ind(k,1) ;
+        //*(ad_comm::global_datafile) >> sel_inf_in_ind(k,1) ;
+        //logsel_slp_in_ind(k,1) =   log(sel_slp_in_ind(k,1)) ;
+        //for (int jj=2;jj<=n_sel_ch_ind(k);jj++) 
+        //{
+        //  sel_inf_in_ind(k,jj)    =     sel_inf_in_ind(k,1) ;
+        //  logsel_slp_in_ind(k,jj) = log(sel_slp_in_ind(k,1)) ;
+        //}
+        //log_input(sel_slp_in_ind(k,1));
+        //log_input(sel_inf_in_ind(k,1));
+        //log_input(logsel_slp_in_ind(k,1));
+
+        phase_selcoff_ind(k) = -1;
+        phase_logist_ind(k) = -1;
+        phase_dlogist_ind(k)  = phase_sel_ind(k);
+        
+        logsel_p1_in_indv(k) = logsel_p1_in_ind(k,1);
+        sel_p2_in_indv(k) =    sel_p2_in_ind(k,1);
+        logsel_p3_in_indv(k) = logsel_p3_in_ind(k,1);
+
+        logsel_slp_in_indv(k) = logsel_slp_in_ind(k,1);
+        sel_inf_in_indv(k) =    sel_inf_in_ind(k,1);
+        //log_input(logsel_slp_in_indv(k));
+        write_input_log << "Double logistic read in..."<<endl;
       }
         break;
       case 4 : // spline for indices
@@ -860,8 +933,6 @@ DATA_SECTION
 
   !! write_input_log << "# Fshry Selages: " << nselages_in_fsh  <<endl;
   !! write_input_log << "# Srvy  Selages: " << nselages_in_ind <<endl;
-
-
 
   !! write_input_log << "# Phase for age-spec fishery "<<phase_selcoff_fsh<<endl;
   !! write_input_log << "# Phase for logistic fishery "<<phase_logist_fsh<<endl;
@@ -1282,15 +1353,20 @@ PARAMETER_SECTION
   init_vector_vector log_rw_q_ind(1,nind,1,npars_rw_q,phase_rw_q) 
   init_matrix_vector log_selcoffs_ind(1,nind,1,n_sel_ch_ind,1,nselages_ind,phase_selcoff_ind)
 
-  // init_vector_vector logsel_slope_ind(1,nind,1,n_sel_ch_ind,phase_logist_ind) // Need to make positive or reparameterize
-  init_vector_vector logsel_slope_ind(1,nind,1,n_sel_ch_ind,phase_logist_ind+1) // Need to make positive or reparameterize
-  init_bounded_vector_vector        sel50_ind(1,nind,1,n_sel_ch_ind,1,20,phase_logist_ind)
-
-  init_vector_vector  logsel_dslope_ind(1,nind,1,n_sel_ch_ind,phase_dlogist_ind) // Need to make positive or reparameterize
-  init_bounded_vector_vector seld50_ind(1,nind,1,n_sel_ch_ind,lb_d50,nages,phase_dlogist_ind)
-
+  init_vector_vector logsel_slope_ind(1,nind,1,n_sel_ch_ind,phase_logist_ind) // Need to make positive or reparameterize
+  //init_vector_vector logsel_slope_ind(1,nind,1,n_sel_ch_ind,phase_logist_ind+1) // Need to make positive or reparameterize
   matrix                sel_slope_ind(1,nind,1,n_sel_ch_ind)
-  matrix                sel_dslope_ind(1,nind,1,n_sel_ch_ind)
+  init_bounded_vector_vector        sel50_ind(1,nind,1,n_sel_ch_ind,0,nages,phase_logist_ind)
+  
+  init_vector_vector logsel_p1_ind(1,nind,1,n_sel_ch_ind,phase_dlogist_ind)
+  matrix                sel_p1_ind(1,nind,1,n_sel_ch_ind)
+  init_vector_vector    sel_p2_ind(1,nind,1,n_sel_ch_ind,phase_dlogist_ind)
+  init_vector_vector logsel_p3_ind(1,nind,1,n_sel_ch_ind,phase_dlogist_ind)
+  matrix                sel_p3_ind(1,nind,1,n_sel_ch_ind)
+
+  //init_vector_vector  logsel_dslope_ind(1,nind,1,n_sel_ch_ind,phase_dlogist_ind) // Need to make positive or reparameterize
+  //init_bounded_vector_vector seld50_ind(1,nind,1,n_sel_ch_ind,lb_d50,nages,phase_dlogist_ind)
+  //matrix                sel_dslope_ind(1,nind,1,n_sel_ch_ind)
 
   3darray log_sel_ind(1,nind,styr,endyr,1,nages)
   3darray sel_ind(1,nind,styr,endyr,1,nages)
@@ -1333,9 +1409,9 @@ PARAMETER_SECTION
   sdreport_vector totbiom_NoFish(styr,endyr)
   sdreport_vector Sp_Biom(styr_sp,endyr+1)
   sdreport_vector Sp_Biom_NoFish(styr_sp,endyr)
-  sdreport_vector Sp_Biom_NoFishRatio(styr,endyr)
+  sdreport_vector Sp_Biom_NoFishRatio(styr+1,endyr)
   sdreport_number ABCBiom;
-  sdreport_vector recruits(styr,endyr+1)
+  sdreport_vector recruits(styr_rec,endyr+1)
   // vector recruits(styr,endyr+1)
   sdreport_number depletion
   sdreport_number depletion_dyn
@@ -1416,6 +1492,8 @@ PARAMETER_SECTION
           {
             logsel_slope_fsh(k,jj) = logsel_slp_in_fsh(k,jj)  ;
             sel50_fsh(k,jj)        =    sel_inf_in_fsh(k,jj)  ;
+            
+            
           }
         }
       }
@@ -1489,7 +1567,6 @@ PRELIMINARY_CALCS_SECTION
     M(i) = M(i-1);
   log_input(M);
   Get_Age2length();
-  log_input(P_age2len);
 
 INITIALIZATION_SECTION
   Mest natmortprior; 
@@ -1516,12 +1593,15 @@ INITIALIZATION_SECTION
   logsel_p1_fsh   logsel_p1_in_fshv ;
   sel_p2_fsh         sel_p2_in_fshv ;
   logsel_p3_fsh   logsel_p3_in_fshv ;
+  logsel_p1_ind   logsel_p1_in_indv ;
+  sel_p2_ind         sel_p2_in_indv ;
+  logsel_p3_ind   logsel_p3_in_indv ;
 
   logsel_slope_ind logsel_slp_in_indv ;
   sel50_ind sel_inf_in_indv ;
 
-  logsel_dslope_ind logsel_dslp_in_indv ;
-  seld50_ind sel_dinf_in_indv ;
+  //logsel_dslope_ind logsel_dslp_in_indv ;
+  //seld50_ind sel_dinf_in_indv ;
 
  //+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+=+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==
 PROCEDURE_SECTION
@@ -1812,6 +1892,7 @@ FUNCTION Get_Selectivity
       dvariable p3 = sel_p3_fsh(k,isel_ch_tmp);
 			dvariable i1 = p1 + p2;
 			dvariable i2 = p1 + i1 + p3;
+			
       for (i=styr;i<=endyr;i++)
       {
         if (i==yrs_sel_ch_fsh(k,isel_ch_tmp)) 
@@ -1830,6 +1911,8 @@ FUNCTION Get_Selectivity
 			// cout << p1 << " "<<p2<<" "<<p3<<endl<<i1<<" "<<i2<<endl<<age_vector<<endl<<sel_fsh(k,i)<<endl;exit(1);
   // OjO, still has nselages as part of configuration option...
         log_sel_fsh(k,i)(nselages_fsh(k),nages) = log_sel_fsh(k,i,nselages_fsh(k));
+        
+        //log_sel_fsh(k,i) -= max(log_sel_fsh(k,i));
         // sel_fsh(k,i) /= 0.9025 ; // Simply 95th %ile squared as normalizing  
       }
     }
@@ -1888,35 +1971,36 @@ FUNCTION Get_Selectivity
         break;
       case 3 : // Double logistic
         {
-          sel_slope_ind(k)  = mfexp(logsel_slope_ind(k));
-          sel_dslope_ind(k) = mfexp(logsel_dslope_ind(k));
+          sel_p1_ind(k)  = mfexp(logsel_p1_ind(k));
+          sel_p3_ind(k)  = mfexp(logsel_p3_ind(k));
           int isel_ch_tmp = 1 ;
-          dvariable sel_slope_tmp = sel_slope_ind(k,isel_ch_tmp);
-          dvariable sel50_tmp     = sel50_ind(k,isel_ch_tmp);
-          dvariable sel_dslope_tmp = sel_dslope_ind(k,isel_ch_tmp);
-          dvariable seld50_tmp     = seld50_ind(k,isel_ch_tmp);
+          dvariable p1 = sel_p1_ind(k,isel_ch_tmp);
+          dvariable p2 = sel_p2_ind(k,isel_ch_tmp);
+          dvariable p3 = sel_p3_ind(k,isel_ch_tmp);
+          dvariable i1 = p1 + p2;
+          dvariable i2 = p1 + i1 + p3;
+          
           for (i=styr;i<=endyr;i++)
           {
             if (i==yrs_sel_ch_ind(k,isel_ch_tmp)) 
             {
-              sel_slope_tmp  = sel_slope_ind(k,isel_ch_tmp);
-              sel50_tmp      =     sel50_ind(k,isel_ch_tmp);
-              sel_dslope_tmp = sel_dslope_ind(k,isel_ch_tmp);
-              seld50_tmp     =     seld50_ind(k,isel_ch_tmp);
+              p1 = sel_p1_ind(k,isel_ch_tmp);
+              p2 = sel_p2_ind(k,isel_ch_tmp);
+              p3 = sel_p3_ind(k,isel_ch_tmp);
+              i1 = p1 + p2;
+              i2 = p1 + i1 + p3;
               if (isel_ch_tmp<n_sel_ch_ind(k))
                 isel_ch_tmp++;
             }
-            log_sel_ind(k,i)(1,nselages_ind(k))     =
-                         -log( 1.0 + mfexp(-1.*sel_slope_tmp * 
-                         ( age_vector(1,nselages_ind(k)) - sel50_tmp) ))+
-                         log( 1. - 1/(1.0 + mfexp(-sel_dslope_tmp * 
-                         ( age_vector(1,nselages_ind(k)) - seld50_tmp))) );
-
-            log_sel_ind(k,i)(nselages_ind(k),nages) = 
-                         log_sel_ind(k,i,nselages_ind(k));
-
-            log_sel_ind(k,i) -= max(log_sel_ind(k,i));  
-            log_sel_ind(k,i)                                  -= log(mean(mfexp(log_sel_ind(k,i)(q_age_min(k),q_age_max(k))))); 
+            log_sel_ind(k,i)(1,nselages_ind(k))     = ( -log(1.0 + mfexp(-2.9444389792/p1 * ( age_vector(1,nselages_ind(k)) - i1) )) +
+                                                          log(1. - 1./(1.0 + mfexp(-2.9444389792/p3 * ( age_vector(1,nselages_ind(k)) - i2))) ) )+0.102586589 ; // constant at end is log(0.95*0.95)
+            
+            // cout << p1 << " "<<p2<<" "<<p3<<endl<<i1<<" "<<i2<<endl<<age_vector<<endl<<sel_ind(k,i)<<endl;exit(1);
+            // OjO, still has nselages as part of configuration option...
+            log_sel_ind(k,i)(nselages_ind(k),nages) = log_sel_ind(k,i,nselages_ind(k));
+            
+            //log_sel_ind(k,i) -= max(log_sel_ind(k,i));
+            // sel_ind(k,i) /= 0.9025 ; // Simply 95th %ile squared as normalizing  
           }
         }
       break;
@@ -2148,7 +2232,8 @@ FUNCTION Calc_Dependent_Vars
     totbiom(i)        = natage(i)*wt_pop;
     sumBiom(i)        = natage(i)(3,nages)*wt_pop(3,nages);
     Sp_Biom_NoFish(i) = N_NoFsh(i)*elem_prod(pow(exp(-M(i)),spmo_frac) , wt_mature); 
-    Sp_Biom_NoFishRatio(i) = Sp_Biom(i) / Sp_Biom_NoFish(i) ;
+    if (i>styr)
+		  Sp_Biom_NoFishRatio(i) = Sp_Biom(i) / Sp_Biom_NoFish(i) ;
     depletion         = totbiom(endyr)/totbiom(styr);
     depletion_dyn     = totbiom(endyr)/totbiom_NoFish(endyr);
   }
@@ -2454,13 +2539,20 @@ FUNCTION Sel_Like
   }
   for (k=1;k<=nind;k++)
   {
-    if (active(logsel_slope_ind(k)))
+    if (active(logsel_p1_ind(k))||active(logsel_slope_ind(k)))
     {
+      sel_like_ind(k,3)    += .1*square( logsel_p1_ind(k,1) )  ;
+      sel_like_ind(k,3)    += .1*square(    sel_p2_ind(k,1) )  ;
+      sel_like_ind(k,3)    += .1*square( logsel_p3_ind(k,1) )  ;
       for (i=2;i<=n_sel_ch_ind(k);i++)
       {
-          int iyr = yrs_sel_ch_ind(k,i) ;
-          dvariable var_tmp = square(sel_sigma_ind(k,i));
-          sel_like_ind(k,2)    += .5*norm2( log_sel_ind(k,iyr-1) - log_sel_ind(k,iyr) ) / var_tmp ;
+        int iyr = yrs_sel_ch_ind(k,i) ;
+        dvariable var_tmp = square(sel_sigma_ind(k,i));
+        
+        sel_like_ind(k,2)    += .5*norm2( log_sel_ind(k,iyr-1) - log_sel_ind(k,iyr) ) / var_tmp ;
+        sel_like_ind(k,3)    += .1*square( logsel_p1_ind(k,i) )  ;
+        sel_like_ind(k,3)    += .1*square(    sel_p2_ind(k,i) )  ;
+        sel_like_ind(k,3)    += .1*square( logsel_p3_ind(k,i) )  ;
       }
     }
     if (active(log_selcoffs_ind(k)))
@@ -3291,7 +3383,8 @@ FUNCTION Get_Bzero
   {
     Sp_Biom(i) = elem_prod(natagetmp(i),pow(survtmp,spmo_frac)) * wt_mature; 
     // natagetmp(i,1)          = mfexp(rec_dev(i) + log_Rzero); // OjO numbers a function of mean not SR curve...
-    natagetmp(i,1)          = mfexp(rec_dev(i) + mean_log_rec);
+		recruits(i)             = mfexp(rec_dev(i) + mean_log_rec);
+    natagetmp(i,1)          = recruits(i);
     natagetmp(i+1)(2,nages) = ++elem_prod(natagetmp(i)(1,nages-1),mfexp(-M(styr)(1,nages-1)) );
     natagetmp(i+1,nages)   += natagetmp(i,nages)*mfexp(-M(styr,nages));
   }
@@ -3381,10 +3474,6 @@ REPORT_SECTION
 		if (nyrs_fsh_age(k)>0)
 		  ncols++;
     for (int i=1;i<=nyrs_fsh_age(k);i++)
-	    icum++;
-		if (nyrs_fsh_length(k)>0)
-		  ncols++;
-    for (int i=1;i<=nyrs_fsh_length(k);i++)
 	    icum++;
 	}
   for (k=1;k<=nind;k++)
@@ -4838,6 +4927,12 @@ FUNCTION Write_R
     R_report<< "$sel_p2_fsh_"<<k<<endl<<sel_p2_fsh(k)<<endl;
     R_report<< "$sel_p3_fsh_"<<k<<endl<<sel_p3_fsh(k)<<endl;
   }
+  for (k=1;k<=nind;k++)
+  {
+    R_report<< "$sel_p1_ind_"<<k<<endl<<sel_p1_ind(k)<<endl;
+    R_report<< "$sel_p2_ind_"<<k<<endl<<sel_p2_ind(k)<<endl;
+    R_report<< "$sel_p3_ind_"<<k<<endl<<sel_p3_ind(k)<<endl;
+  }
   R_Report(phizero);
   R_Report(B100);
   R_Report(B100.sd);
@@ -5655,7 +5750,7 @@ FUNCTION double get_AC(const int& indind)
 
  
 GLOBALS_SECTION
-  // #include <logistic-normal.h>
+  //#include <logistic-normal.h>
   #include <admodel.h>  
 	#undef write_SIS_rep 
   /// Writes SIS report objects
