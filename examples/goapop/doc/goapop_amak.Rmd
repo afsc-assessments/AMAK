@@ -124,6 +124,14 @@ Like other rockfish species...
 
 ## Management History
 
+Selectivity
+\begin{align}
+    S_\mathit{a} &= \left( \frac{1}{1 + exp\frac{ln(19)(a-t_1))}, &\text{ when } \beta < B/B_\mathit{MSY} \le 1
+    \begin{cases}
+    \end{cases}\\
+    F_\mathit{OFL} &< F_\mathit{MSY} \text{ with directed fishery } F = 0 \text{ when } B/B_\mathit{MSY} \le \beta \notag
+\end{align}
+
 
 The fishing seasons ...
 
