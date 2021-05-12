@@ -1,8 +1,8 @@
 EXEC = amak
 ifeq ($(SAFE),TRUE)
-	DIST = ../../src/
+	DIST = ../../../../src/
 else
-	DIST = ../../src/
+	DIST = ../../../../src/
 endif
 ARGS = -nox -iprint 50 
 

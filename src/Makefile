@@ -6,10 +6,13 @@ else
     COPY=cp
 endif
 
-all: amak ms 
+all: amak ms main
 
 ms: ms.tpl 
 	@admb -f ms.tpl 
+
+main: main.tpl 
+	@admb -f main.tpl 
 
 amak: amak.tpl 
 	@admb  amak.tpl 

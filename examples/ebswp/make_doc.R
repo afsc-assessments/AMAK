@@ -1,0 +1,5 @@
+library(sa4all)
+sa4all::draft(authors = "Kelli F. Johnson", create_dir = TRUE, type="ak")
+setwd("doc")
+bookdown::render_book("00a.Rmd", clean = FALSE, output_dir = getwd())
+setwd("..")

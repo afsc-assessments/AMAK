@@ -245,6 +245,7 @@ DATA_SECTION
   init_vector mo_ind(1,nind)                      //Month occur 
   init_matrix obs_ind_in(1,nind,1,nyrs_ind)          //values of index value (annual)
   init_matrix obs_se_ind_in(1,nind,1,nyrs_ind)       //values of indices serrs
+           //if(surv_dwnwt==1 & yrs_srv(isrv,iyr)>= endyr) obs_lse_srv(isrv,iyr)=cv_inc;
 
   vector ind_month_frac(1,nind)
   !! log_input(nyrs_ind);
@@ -333,6 +334,12 @@ DATA_SECTION
   !! log_input(use_age_err);
   init_int retro            // Retro years to peel off (0 means full dataset)
   !! log_input(retro);
+	init_number surv_dwnwt;
+  init_number cv_inc;
+  init_number n_comp;
+  !! log_input(surv_dwnwt);
+  !! log_input(cv_inc);
+  !! log_input(n_comp);
   init_number steepnessprior
   init_number cvsteepnessprior
   init_int    phase_srec
@@ -483,8 +490,9 @@ DATA_SECTION
   vector   logsel_p1_in_fshv(1,nfsh)
   matrix   sel_p1_in_fsh(1,nfsh,1,nyrs)
 
+  matrix   logsel_p2_in_fsh(1,nfsh,1,nyrs)
+  vector   logsel_p2_in_fshv(1,nfsh)
   matrix   sel_p2_in_fsh(1,nfsh,1,nyrs)
-  vector   sel_p2_in_fshv(1,nfsh)
 
   matrix   logsel_p3_in_fsh(1,nfsh,1,nyrs)
   vector   logsel_p3_in_fshv(1,nfsh)
@@ -518,8 +526,9 @@ DATA_SECTION
   vector   logsel_p1_in_indv(1,nind)
   matrix   sel_p1_in_ind(1,nind,1,nyrs)
 
-  matrix   sel_p2_in_ind(1,nind,1,nyrs)
-  vector   sel_p2_in_indv(1,nind)
+  matrix   logsel_p2_in_ind(1,nind,1,nyrs)
+  vector   logsel_p2_in_indv(1,nind)
+  matrix   sel_p2_in_ind(1,nfsh,1,nyrs)
 
   matrix   logsel_p3_in_ind(1,nind,1,nyrs)
   vector   logsel_p3_in_indv(1,nind)
@@ -562,13 +571,13 @@ DATA_SECTION
   logsel_slp_in_fshv.initialize();
   sel_inf_in_fshv.initialize();
   logsel_p1_in_fshv.initialize();
-  sel_p2_in_fshv.initialize();
+  logsel_p2_in_fshv.initialize();
   logsel_p3_in_fshv.initialize();
 
   logsel_slp_in_indv.initialize();
   sel_inf_in_indv.initialize();
   logsel_p1_in_indv.initialize();
-  sel_p2_in_indv.initialize();
+  logsel_p2_in_indv.initialize();
   logsel_p3_in_indv.initialize();
   
   //logsel_dslp_in_indv.initialize();
@@ -712,10 +721,13 @@ DATA_SECTION
           sel_p3_in_fsh(k,jj)    =     sel_p3_in_fsh(k,1) ;
         }
         logsel_p1_in_fsh(k) =  log(sel_p1_in_fsh(k)) ;
+        logsel_p2_in_fsh(k) =  log(sel_p2_in_fsh(k)) ;
         logsel_p3_in_fsh(k) =  log(sel_p3_in_fsh(k)) ;
 
+        log_input(nselages_in_fsh(k));
         log_input(phase_sel_fsh(k));
         log_input(n_sel_ch_fsh(k));
+        log_input(sel_sigma_fsh(k)(1,n_sel_ch_fsh(k)));
         log_input(sel_p1_in_fsh(k)(1,n_sel_ch_fsh(k)));
         log_input(sel_p2_in_fsh(k)(1,n_sel_ch_fsh(k)));
         log_input(sel_p3_in_fsh(k)(1,n_sel_ch_fsh(k)));
@@ -727,7 +739,7 @@ DATA_SECTION
         phase_sel_spl_fsh(k) = -1;
 
         logsel_p1_in_fshv(k) = logsel_p1_in_fsh(k,1);
-           sel_p2_in_fshv(k) =    sel_p2_in_fsh(k,1);
+        logsel_p2_in_fshv(k) = logsel_p2_in_fsh(k,1);
         logsel_p3_in_fshv(k) = logsel_p3_in_fsh(k,1);
 
         logsel_slp_in_fshv(k) = logsel_slp_in_fsh(k,1);
@@ -782,7 +794,7 @@ DATA_SECTION
         for (j=1;j<=nages;j++) 
           *(ad_comm::global_datafile) >> sel_ind_tmp(j);  
         log_input(sel_ind_tmp);
-        log_selcoffs_ind_in(k,1)(1,nselages_in_ind(k)) = log((sel_ind_tmp(1,nselages_in_ind(k))+1e-7)/mean(sel_fsh_tmp(1,nselages_in_ind(k))+1e-7) );
+        log_selcoffs_ind_in(k,1)(1,nselages_in_ind(k)) = log((sel_ind_tmp(1,nselages_in_ind(k))+1e-7)/mean(sel_ind_tmp(1,nselages_in_ind(k))+1e-7) );
         // set all change selectivity to initial values
         for (int jj=2;jj<=n_sel_ch_ind(k);jj++) 
         {
@@ -791,7 +803,7 @@ DATA_SECTION
             sel_ind_tmp(j)  = sel_ind_tmp(nselages_in_ind(k));  
           }
           // Set tmp to actual initial vectors...
-          log_selcoffs_ind_in(k,jj)(1,nselages_in_ind(k)) = log((sel_ind_tmp(1,nselages_in_ind(k))+1e-7)/mean(sel_fsh_tmp(1,nselages_in_ind(k))+1e-7) );
+          log_selcoffs_ind_in(k,jj)(1,nselages_in_ind(k)) = log((sel_ind_tmp(1,nselages_in_ind(k))+1e-7)/mean(sel_ind_tmp(1,nselages_in_ind(k))+1e-7) );
           write_input_log<<"Sel_in_ind "<< mfexp(log_selcoffs_ind_in(k,jj))<<endl;
         }
         phase_selcoff_ind(k) = phase_sel_ind(k);
@@ -900,7 +912,7 @@ DATA_SECTION
         phase_dlogist_ind(k)  = phase_sel_ind(k);
         
         logsel_p1_in_indv(k) = logsel_p1_in_ind(k,1);
-        sel_p2_in_indv(k) =    sel_p2_in_ind(k,1);
+        logsel_p2_in_indv(k) = logsel_p2_in_ind(k,1);
         logsel_p3_in_indv(k) = logsel_p3_in_ind(k,1);
 
         logsel_slp_in_indv(k) = logsel_slp_in_ind(k,1);
@@ -1003,6 +1015,14 @@ DATA_SECTION
       if (max(yrs_ind_age_in(k)(1,nyrs_ind_age(k)))>=(endyr-retro)) 
          nyrs_ind_age(k) -= 1;
     }
+  // obs_se_ind_in(1,nind,1,nyrs_ind)       //values of indices serrs
+    if(surv_dwnwt==1){
+			if(yrs_ind_in(k,nyrs_ind(k))  <= endyr) 
+        obs_se_ind_in(k,nyrs_ind(k)) *= cv_inc;      //values of indices serrs
+			if(yrs_ind_in(k,nyrs_ind(k))  <=  endyr) 
+        n_sample_ind_age_in(k,nyrs_ind_age(k)) = n_comp;
+  // matrix n_sample_ind_age(1,nind,1,nyrs_ind_age)         //Years of index value (annual)
+		}
   }
   endyr_rec_est = endyr_rec_est - retro;
   endyr         = endyr - retro;
@@ -1294,7 +1314,10 @@ PARAMETER_SECTION
 	// Case 3 double logistic, 3 parameter
   init_vector_vector logsel_p1_fsh(1,nfsh,1,n_sel_ch_fsh,phase_dlogist_fsh)
   matrix                sel_p1_fsh(1,nfsh,1,n_sel_ch_fsh)
-  init_vector_vector    sel_p2_fsh(1,nfsh,1,n_sel_ch_fsh,phase_dlogist_fsh)
+	!! if (phase_dlogist_fsh[1]>0) for (k=1;k<=nfsh;k++) if (phase_dlogist_fsh[k]>0) phase_dlogist_fsh[k]++;
+  init_vector_vector logsel_p2_fsh(1,nfsh,1,n_sel_ch_fsh,phase_dlogist_fsh)
+  matrix                sel_p2_fsh(1,nfsh,1,n_sel_ch_fsh)
+	!! if (phase_dlogist_fsh[1]>0) for (k=1;k<=nfsh;k++) if (phase_dlogist_fsh[k]>0) phase_dlogist_fsh[k]++;
   init_vector_vector logsel_p3_fsh(1,nfsh,1,n_sel_ch_fsh,phase_dlogist_fsh)
   matrix                sel_p3_fsh(1,nfsh,1,n_sel_ch_fsh)
   // init_vector_vector logsel_dslope_fsh(1,nfsh,1,n_sel_ch_fsh,phase_dlogist_fsh)
@@ -1361,7 +1384,10 @@ PARAMETER_SECTION
   
   init_vector_vector logsel_p1_ind(1,nind,1,n_sel_ch_ind,phase_dlogist_ind)
   matrix                sel_p1_ind(1,nind,1,n_sel_ch_ind)
-  init_vector_vector    sel_p2_ind(1,nind,1,n_sel_ch_ind,phase_dlogist_ind)
+	!! if (phase_dlogist_ind[1]>0) for (k=1;k<=nind;k++) if (phase_dlogist_ind[k]>0) phase_dlogist_ind[k]++;
+  init_vector_vector logsel_p2_ind(1,nind,1,n_sel_ch_ind,phase_dlogist_ind)
+  matrix                sel_p2_ind(1,nind,1,n_sel_ch_ind)
+	!! if (phase_dlogist_ind[1]>0) for (k=1;k<=nind;k++) if (phase_dlogist_ind[k]>0) phase_dlogist_ind[k]++;
   init_vector_vector logsel_p3_ind(1,nind,1,n_sel_ch_ind,phase_dlogist_ind)
   matrix                sel_p3_ind(1,nind,1,n_sel_ch_ind)
 
@@ -1493,8 +1519,6 @@ PARAMETER_SECTION
           {
             logsel_slope_fsh(k,jj) = logsel_slp_in_fsh(k,jj)  ;
             sel50_fsh(k,jj)        =    sel_inf_in_fsh(k,jj)  ;
-            
-            
           }
         }
       }
@@ -1532,7 +1556,6 @@ PARAMETER_SECTION
       for (int jj=1;jj<=n_sel_ch_ind(k);jj++) 
       {
         logsel_slope_ind(k,jj) = logsel_slp_in_ind(k,jj)  ;
-        // logsel_slope_ind(k,jj)    = 0.   ;
         sel50_ind(k,jj)           = sel_inf_in_ind(k,jj)  ;
       }
     }
@@ -1592,10 +1615,10 @@ INITIALIZATION_SECTION
   // logsel_dslope_fsh logsel_dslp_in_fshv ;
   // seld50_fsh sel_dinf_in_fshv 
   logsel_p1_fsh   logsel_p1_in_fshv ;
-  sel_p2_fsh         sel_p2_in_fshv ;
+  logsel_p2_fsh   logsel_p2_in_fshv ;
   logsel_p3_fsh   logsel_p3_in_fshv ;
   logsel_p1_ind   logsel_p1_in_indv ;
-  sel_p2_ind         sel_p2_in_indv ;
+  logsel_p2_ind   logsel_p2_in_indv ;
   logsel_p3_ind   logsel_p3_in_indv ;
 
   logsel_slope_ind logsel_slp_in_indv ;
@@ -1685,10 +1708,18 @@ FUNCTION write_mceval
         mceval_R<<k<<" "<< i <<" "<< SRecruit( SSB_fut(k,i-rec_age) ) * mfexp(rec_dev_future(i)) <<endl;     
       }
     }
+		k=1;
     for (i=1;i<=nyrs_ind(1);i++)
     {
       // iyr = int(yrs_ind(k,i));
-      mceval_srv<<yrs_ind(1,i)<<" "<<obs_ind(1,i)<<" "<< pred_ind(1,i) <<" "<< mc_count<<endl;
+      mceval_srv<<yrs_ind(k,i)<<" "
+			          <<obs_ind(k,i)<<" "
+								<< pred_ind(k,i) <<" "
+								<< mfexp(rnorm(log(value(pred_ind(k,i))) , obs_lse_ind(k,i), rng)) <<" "
+								<< mc_count<<" "
+								<< square(exp(obs_lse_ind(k,i))) <<" "
+								<<endl;
+      // ind_like(k) += square(log(obs_ind(k,i)) - log(pred_ind(k,i)) ) / (2.*obs_lse_ind(k,i)*obs_lse_ind(k,i));
 		}
     for (k=1;k<=5;k++)
     for (i=styr;i<=endyr;i++)
@@ -1729,7 +1760,10 @@ FUNCTION write_mceval
   mceval<<
   B100        << " "<< 
   q_ind(1,1)  << " "<< 
-  M(endyr)    << " "<< 
+  M(endyr,1)    << " "<< 
+  sel_p1_fsh(1,n_sel_ch_fsh(1)) <<" "<<         
+  sel_p2_fsh(1,n_sel_ch_fsh(1)) <<" "<<         
+  sel_p3_fsh(1,n_sel_ch_fsh(1)) <<" "<<         
   steepness << " "<< 
   depletion << " "<< 
   MSY       << " "<< 
@@ -1886,28 +1920,27 @@ FUNCTION Get_Selectivity
     case 3 : // Double logistic
     {
       sel_p1_fsh(k)  = mfexp(logsel_p1_fsh(k));
+      sel_p2_fsh(k)  = mfexp(logsel_p2_fsh(k));
       sel_p3_fsh(k)  = mfexp(logsel_p3_fsh(k));
       int isel_ch_tmp = 1 ;
-      dvariable p1 = sel_p1_fsh(k,isel_ch_tmp);
-      dvariable p2 = sel_p2_fsh(k,isel_ch_tmp);
-      dvariable p3 = sel_p3_fsh(k,isel_ch_tmp);
-			dvariable i1 = p1 + p2;
-			dvariable i2 = p1 + i1 + p3;
+      dvariable bu = sel_p1_fsh(k,isel_ch_tmp);
+      dvariable du = sel_p2_fsh(k,isel_ch_tmp);
+      dvariable dd = sel_p3_fsh(k,isel_ch_tmp);
+			dvariable bd = bu + du + dd;
 			
       for (i=styr;i<=endyr;i++)
       {
         if (i==yrs_sel_ch_fsh(k,isel_ch_tmp)) 
         {
-          p1 = sel_p1_fsh(k,isel_ch_tmp);
-          p2 = sel_p2_fsh(k,isel_ch_tmp);
-          p3 = sel_p3_fsh(k,isel_ch_tmp);
-			    i1 = p1 + p2;
-			    i2 = p1 + i1 + p3;
+          bu = sel_p1_fsh(k,isel_ch_tmp);
+          du = sel_p2_fsh(k,isel_ch_tmp);
+          dd = sel_p3_fsh(k,isel_ch_tmp);
+			    bd = bu + du + dd;
           if (isel_ch_tmp<n_sel_ch_fsh(k))
             isel_ch_tmp++;
         }
-        log_sel_fsh(k,i)(1,nselages_fsh(k))     = ( -log(1.0 + mfexp(-2.9444389792/p1 * ( age_vector(1,nselages_fsh(k)) - i1) )) +
-               log(1. - 1./(1.0 + mfexp(-2.9444389792/p3 * ( age_vector(1,nselages_fsh(k)) - i2))) ) )+0.102586589 ; // constant at end is log(0.95*0.95)
+        log_sel_fsh(k,i)(1,nselages_fsh(k))     = ( -log(1.0 + mfexp(-2.9444389792/du * ( age_vector(1,nselages_fsh(k)) - bu) )) +
+               log(1. - 1./(1.0 + mfexp(-2.9444389792/dd * ( age_vector(1,nselages_fsh(k)) - bd))) ) )+0.102586589 ; // constant at end is log(0.95*0.95)
 
 			// cout << p1 << " "<<p2<<" "<<p3<<endl<<i1<<" "<<i2<<endl<<age_vector<<endl<<sel_fsh(k,i)<<endl;exit(1);
   // OjO, still has nselages as part of configuration option...
@@ -1975,26 +2008,29 @@ FUNCTION Get_Selectivity
           sel_p1_ind(k)  = mfexp(logsel_p1_ind(k));
           sel_p3_ind(k)  = mfexp(logsel_p3_ind(k));
           int isel_ch_tmp = 1 ;
-          dvariable p1 = sel_p1_ind(k,isel_ch_tmp);
-          dvariable p2 = sel_p2_ind(k,isel_ch_tmp);
-          dvariable p3 = sel_p3_ind(k,isel_ch_tmp);
-          dvariable i1 = p1 + p2;
-          dvariable i2 = p1 + i1 + p3;
+          dvariable bu = sel_p1_ind(k,isel_ch_tmp);
+          dvariable du = sel_p2_ind(k,isel_ch_tmp);
+          dvariable dd = sel_p3_ind(k,isel_ch_tmp);
+			    dvariable bd = bu + du + dd;
+          if (isel_ch_tmp<n_sel_ch_ind(k))
+            isel_ch_tmp++;
+        log_sel_ind(k,i)(1,nselages_ind(k))     = ( -log(1.0 + mfexp(-2.9444389792/du * ( age_vector(1,nselages_ind(k)) - bu) )) +
+               log(1. - 1./(1.0 + mfexp(-2.9444389792/dd * ( age_vector(1,nselages_ind(k)) - bd))) ) )+0.102586589 ; // constant at end is log(0.95*0.95)
+
           
           for (i=styr;i<=endyr;i++)
           {
             if (i==yrs_sel_ch_ind(k,isel_ch_tmp)) 
             {
-              p1 = sel_p1_ind(k,isel_ch_tmp);
-              p2 = sel_p2_ind(k,isel_ch_tmp);
-              p3 = sel_p3_ind(k,isel_ch_tmp);
-              i1 = p1 + p2;
-              i2 = p1 + i1 + p3;
+              bu = sel_p1_ind(k,isel_ch_tmp);
+              du = sel_p2_ind(k,isel_ch_tmp);
+              dd = sel_p3_ind(k,isel_ch_tmp);
+			        bd = bu + du + dd;
               if (isel_ch_tmp<n_sel_ch_ind(k))
                 isel_ch_tmp++;
             }
-            log_sel_ind(k,i)(1,nselages_ind(k))     = ( -log(1.0 + mfexp(-2.9444389792/p1 * ( age_vector(1,nselages_ind(k)) - i1) )) +
-                                                          log(1. - 1./(1.0 + mfexp(-2.9444389792/p3 * ( age_vector(1,nselages_ind(k)) - i2))) ) )+0.102586589 ; // constant at end is log(0.95*0.95)
+            log_sel_ind(k,i)(1,nselages_ind(k))     = ( -log(1.0 + mfexp(-2.9444389792/du * ( age_vector(1,nselages_ind(k)) - bu) )) +
+                   log(1. - 1./(1.0 + mfexp(-2.9444389792/dd * ( age_vector(1,nselages_ind(k)) - bd))) ) )+0.102586589 ; // constant at end is log(0.95*0.95)
             
             // cout << p1 << " "<<p2<<" "<<p3<<endl<<i1<<" "<<i2<<endl<<age_vector<<endl<<sel_ind(k,i)<<endl;exit(1);
             // OjO, still has nselages as part of configuration option...
@@ -2104,6 +2140,7 @@ FUNCTION Get_Numbers_at_Age
 
   for (i=styr;i<=endyr;i++)
   {
+    if (i<endyr) natage(i+1,1) = SRecruit(Sp_Biom(i)) * mfexp(rec_dev(i+1)) ; //Bai modified
     if (Popes)
     {
       dvariable  t1=mfexp(-natmort(i)*0.5);
@@ -2134,8 +2171,11 @@ FUNCTION Get_Numbers_at_Age
       // }
     }
     Catch_at_Age(i);
-    Sp_Biom(i)  = elem_prod(natage(i),pow(S(i),spmo_frac)) * wt_mature; 
-    if (i<endyr) mod_rec(i+1)  = natage(i+1,1);
+    if (i<endyr) 
+		{
+      Sp_Biom(i+1)  = elem_prod(natage(i+1),pow(S(i+1),spmo_frac)) * wt_mature; 
+      mod_rec(i+1)  = natage(i+1,1);
+		}
   }
 
 FUNCTION Get_Survey_Predictions
@@ -2328,6 +2368,7 @@ FUNCTION evaluate_the_objective_function
   Compute_priors();
   if (active(log_Rzero)) // OjO
     obj_fun += .5 * square(log_Rzero-mean_log_rec); // A slight penalty to keep Rzero in reality...
+    // obj_fun += .5 * square(log_Rzero-R_guess);
 
   obj_comps.initialize();
   obj_comps(1)  = sum(catch_like);
@@ -2421,9 +2462,10 @@ FUNCTION Rec_Like
         rec_like(4) += .5*norm2( rec_dev(endyr_rec_est,endyr  ) )/sigmarsq + (endyr-endyr_rec_est)*log(sigmar) ; 
     }
     else // JNI comment next line
-       rec_like(2) += norm2( rec_dev(styr_rec,endyr) ) ;
+       rec_like(2) += norm2( rec_dev(styr_rec_est,endyr) ) ;
+       // rec_like(2) += norm2( rec_dev(styr_rec,endyr) ) ;
 
-    // rec_like(2) += norm2( rec_dev(styr_rec_est,endyr) ) ;
+    rec_like(2) += norm2( rec_dev(styr_rec_est,endyr) ) ;
 
     if (active(rec_dev_future))
     {
@@ -2496,17 +2538,16 @@ FUNCTION Sel_Like
   {
     if (active(logsel_p1_fsh(k))||active(logsel_slope_fsh(k)))
     {
-      sel_like_fsh(k,3)    += .1*square( logsel_p1_fsh(k,1) )  ;
-      sel_like_fsh(k,3)    += .1*square(    sel_p2_fsh(k,1) )  ;
-      sel_like_fsh(k,3)    += .1*square( logsel_p3_fsh(k,1) )  ;
+			 sel_like_fsh(k,3)    += .1*square( logsel_p1_fsh(k,1) )  ;
+       sel_like_fsh(k,3)    += .1*square( logsel_p2_fsh(k,1) )  ;
+       sel_like_fsh(k,3)    += .1*square( logsel_p3_fsh(k,1) )  ;
       for (i=2;i<=n_sel_ch_fsh(k);i++)
       {
           int iyr = yrs_sel_ch_fsh(k,i) ;
           dvariable var_tmp = square(sel_sigma_fsh(k,i));
-
           sel_like_fsh(k,2)    += .5*norm2( log_sel_fsh(k,iyr-1) - log_sel_fsh(k,iyr) ) / var_tmp ;
           sel_like_fsh(k,3)    += .1*square( logsel_p1_fsh(k,i) )  ;
-          sel_like_fsh(k,3)    += .1*square(    sel_p2_fsh(k,i) )  ;
+          sel_like_fsh(k,3)    += .1*square( logsel_p2_fsh(k,i) )  ;
           sel_like_fsh(k,3)    += .1*square( logsel_p3_fsh(k,i) )  ;
       }
     }
@@ -2543,7 +2584,7 @@ FUNCTION Sel_Like
     if (active(logsel_p1_ind(k))||active(logsel_slope_ind(k)))
     {
       sel_like_ind(k,3)    += .1*square( logsel_p1_ind(k,1) )  ;
-      sel_like_ind(k,3)    += .1*square(    sel_p2_ind(k,1) )  ;
+      sel_like_ind(k,3)    += .1*square( logsel_p2_ind(k,1) )  ;
       sel_like_ind(k,3)    += .1*square( logsel_p3_ind(k,1) )  ;
       for (i=2;i<=n_sel_ch_ind(k);i++)
       {
@@ -2552,7 +2593,7 @@ FUNCTION Sel_Like
         
         sel_like_ind(k,2)    += .5*norm2( log_sel_ind(k,iyr-1) - log_sel_ind(k,iyr) ) / var_tmp ;
         sel_like_ind(k,3)    += .1*square( logsel_p1_ind(k,i) )  ;
-        sel_like_ind(k,3)    += .1*square(    sel_p2_ind(k,i) )  ;
+        sel_like_ind(k,3)    += .1*square( logsel_p2_ind(k,i) )  ;
         sel_like_ind(k,3)    += .1*square( logsel_p3_ind(k,i) )  ;
       }
     }
@@ -3421,8 +3462,8 @@ FUNCTION dvariable Requil(dvariable& phi)
 
 FUNCTION write_mceval_hdr
     for (k=1;k<=nind;k++)
-      mceval<< " model Obj_Fun q_ind_"<< k<< " ";
-    mceval<<"M steepness depletion MSY MSYL Fmsy Fcur_Fmsy Bcur_Bmsy Bmsy totbiom_"<<endyr<<" "<< 
+      mceval<< " model Obj_Fun B100 q_ind_"<< k<< " ";
+    mceval<<"M p1 p2 p3 steepness depletion MSY MSYL Fmsy Fcur_Fmsy Bcur_Bmsy Bmsy totbiom_"<<endyr<<" "<< 
     " F35          "<< 
     " F40          "<< 
     " F50          "<< 
@@ -3435,6 +3476,36 @@ FUNCTION write_mceval_hdr
     " fut_catch_F50%_"<<styr_fut<<" "<<  
     " fut_catch_F40%_"<<styr_fut<<" "<<  
     " fut_catch_F35%_"<<styr_fut<<" "<<  endl;
+		/*
+  B100        << " "<< 
+  q_ind(1,1)  << " "<< 
+  M(endyr)    << " "<< 
+  sel_p1_fsh(1,n_sel_ch_fsh(1)) <<" "<<         
+  sel_p2_fsh(1,n_sel_ch_fsh(1)) <<" "<<         
+  sel_p3_fsh(1,n_sel_ch_fsh(1)) <<" "<<         
+  steepness << " "<< 
+  depletion << " "<< 
+  MSY       << " "<< 
+  MSYL      << " "<< 
+  Fmsy      << " "<< 
+  Fcur_Fmsy << " "<< 
+  Bcur_Bmsy << " "<< 
+  Bmsy      << " "<< 
+  ABCBiom   << " "<< 
+  F35       << " "<<
+  F40       << " "<<
+  F50       << " "<<
+  SSB_fut(1,endyr_fut) << " "<< 
+  SSB_fut(2,endyr_fut) << " "<< 
+  SSB_fut(3,endyr_fut) << " "<< 
+  SSB_fut(4,endyr_fut) << " "<< 
+  SSB_fut(5,endyr_fut) << " "<< 
+  catch_future(1,styr_fut)    << " "<<  
+  catch_future(2,styr_fut)    << " "<<  
+  catch_future(3,styr_fut)    << " "<<  
+  catch_future(4,styr_fut)    << " "<<  endl;
+		*/
+
 
 //+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+ 
 REPORT_SECTION
@@ -4052,7 +4123,7 @@ FUNCTION write_projout
 FINAL_SECTION
   /** Final section to compute projection input and profiles (over F) */
   // Calc_Dependent_Vars();
-  // write_proj();
+  write_proj();
   // write_projout();
   // write_msy_out();
   Profile_F();

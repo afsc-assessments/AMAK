@@ -125,15 +125,13 @@ read.dat <-
     return(A)
   }
 
-read.psv <-
-function(fn, nsamples=10000)
-{
+read.psv <- function(fn, nsamples=10000) {
 	#This function reads the binary output from ADMB
 	#-mcsave command line option.
 	#fn = paste(ifile,'.psv',sep='')
 	filen <- file(fn, "rb")
-	nopar <- readBin(filen, what = integer(), n = 1)
-	mcmc <- readBin(filen, what = numeric(), n = nopar * nsamples)
+	nopar <- readBin(filen, what = integer(), n = 1) 
+	mcmc <- readBin(filen, what = numeric(), n = nopar * nsamples) 
 	mcmc <- matrix(mcmc, byrow = TRUE, ncol = nopar)
 	close(filen)
 	return(mcmc)
@@ -197,3 +195,176 @@ R2_admb_input<-function(d,filen,name="Run ",retro=0,removeall=T){
   WriteDat(d,i1=14,i2=len,filen)
   
 }
+# amak.dat  
+write_amak_dat <- function(retro=0,surv_dwnwt=0,lsryr=2017,nsel=41){
+ cat (file="amak.dat","am2019b.dat \n Model_16.0b 
+#selectivity_shar_matrix 
+1 2  
+1 1 
+#Sr_type 
+2  
+#AgeError 
+1  
+#Retro \n ",
+retro, 
+"\n #surv_dwnwt \n",
+surv_dwnwt, " 
+#cv_inc
+100
+#n_comp
+0.01
+#Steepness 
+0.8  300  -6  
+#SigmaR 
+0.6  15  4  
+#yrs_sr 
+1977  ", lsryr, "\n
+#Linf
+74.4  0.1 -4                                                                                  
+#K
+0.16  0.1 -4                                                                                  
+#Lo_Len
+18  0.1 -4                                                                                  
+#Sigma_len
+0.09 0.1  -4                                                                                  
+#Natural_Mortality 
+0.3  0.05  -4  
+# NEW npars_mage
+0
+# NEW Mage_in
+# phase_Mage
+-5
+#Nyrs_Random_walk_M 
+0
+#Random_walk_M_yrs blank if nyrs==0
+#Random_walk_M_sigmas blank if nyrs==0
+#Random_walk_q_phases 
+-4
+#catchability 
+1  0.2  4  
+#q_power 
+1  0.2  -4  
+#Random_walk_q_phases 
+-1
+#Nyrs_Random_walk_q
+0
+#Random_walk_q_yrs blank if nyrs==0
+
+#Random_walk_q_sigmas blank if nyrs==0
+
+#q_agemin 
+4  
+#q_agemax 
+10  
+#junk 
+0.05  
+#n_proj_yrs 
+10  
+#Fsh_selopt_1 
+1  
+#Fsh_nages_1 
+10  
+#Fsh_ph_1 
+4  
+#Fsh_curvpen_1 
+0.946 
+#Fsh_domepen_1 
+10.3  
+#Fsh_sel_change_1 
+# nyrs fish selectivity changes
+",
+nsel, "
+# Years of selectivity change fishery 
+",
+seq(1978,1978+nsel-1),"\n
+# sigm fish selectivity changes
+", rep(0.35,nsel),"\n",
+"
+#Fsh_sel_init_1 
+0.02 0.7 1 1 1 1 1 1 1 1 1 
+#Ind_selopt 
+1  
+# Selages
+10  
+# Phase Survey
+5  
+# sigma age-age
+0.5  
+# sigma Dome... 
+0.4  
+# Years of selectivity change survey 
+# nyrs fish selectivity changes
+0
+# Yrs fish selectivity changes
+#1987
+# sigm fish selectivity changes
+#0.7 
+# Initial values for coefficitients at each change (one for every change plus 1) 
+# 2 3 4 5 6 7 8 9 10 11 12  
+0.2 0.7 1 1 1 1 1 1 1 1 1 
+#Test  
+123456789  
+"
+  )
+}
+
+write_proj_setup<- function(begyr=2019){
+ cat (file="setup.dat","
+# a new file
+#Run_name
+Std
+#Tier
+3
+#nalts
+1
+#alts
+3
+#tac_abc
+1
+#srr
+1
+#rec_proj
+1
+#srr_cond
+0
+#srr_prior
+0
+#write_big
+1
+#nyrs_proj
+3
+#nsims
+1000
+#beg_yr_label
+",
+begyr)
+}
+
+write_spp_catch<- function(catch=9999,curyear){
+	cat (file="spp_catch.dat","
+#_Number_of_years with specified catch 
+1
+# Number of species                                         
+1 
+# OY Minimum                      
+1343.248  # Note that this is for age-structured species    1330.148                
+# OY Maximum                      
+1943.248  # Note that this is for age-structured species    1930.148                
+# data files for each species                 
+amak.prj
+#ABC Multipliers                                           
+1
+# scalars                   
+1
+0.6
+  # Number of TAC model categories                
+1 
+  # TAC model indices (for aggregating)         (should be 1)
+1
+# Catch in each future year           
+",
+curyear,
+catch
+		)
+}
+#write_spp_catch(curyear=1999)

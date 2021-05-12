@@ -1,6 +1,6 @@
   #_SETUP_FILE_FOR_THE_BERING_SEA/AI_FISHERIES                      
   #_Number_of_years with specified catch (if begin-yr = 2005, and this number is "3", then subsequent values represent catches in 2005, 06, and 07 (to evaluate alts for 2008)                      
-3                     
+1                     
   # Number of species                                               
 1                      
   # OY Minimum                      
@@ -22,6 +22,6 @@ data/5yr_avg.dat
   # TAC model indices (for aggregating)                     
 1 
 # Catch in each future year                     
-2019  57.951.
+2019  57951.
 2020  59.300.   
 2021  54.700.
