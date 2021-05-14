@@ -5303,6 +5303,14 @@ FUNCTION Write_R
              <<"post_priors      "<<endl
              <<"residual         "<<endl
              <<"total            "<<endl;
+
+    R_report << setw(10)<< setfixed() << setprecision(5) <<endl;
+    for (k=1;k<=nfsh;k++)
+    {
+      R_report << "$Age_Fishery_"<< (k) <<"" <<endl;
+      R_report << age_like_fsh(k)<<endl;
+    }
+    R_report   << endl;
     for (k=1;k<=nfsh;k++)
     {
       R_report << "$Sel_Fshry_"<< (k) <<""<<endl;
