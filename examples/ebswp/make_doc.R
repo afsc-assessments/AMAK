@@ -1,28 +1,26 @@
+rm(list=ls())
+library(r4ak)
 library(sa4all)
 sa4all::draft(authors = "Kelli F. Johnson", create_dir = TRUE, type="ak")
 setwd("doc")
 bookdown::render_book("00a.Rmd", clean = FALSE, output_dir = getwd())
 setwd("..")
 source("R/prelims.R")
-#-------------------------------------------------------------------------------
-# Visual compare runs
-#-------------------------------------------------------------------------------
-library(ggridges)
-library(ggthemes)
-library(scales)
-
-source("R/compareRuns.r")
-
+#source("R/compareRuns.r")
 #        Read in the output of the assessment
-modlyr   <- readList("2019_Final/For_R.rep")
 base <- readList("runs/base/For_R.rep")
+#modlyr   <- readList("2019_Final/For_R.rep")
 M <- list(base)
+names(M) <- c("base")
 
 plot_survey(M,which_survey=c(2),xlim=c(1990,2020))
 plot_survey(M,which_survey=c(5),xlim=c(1990,2020))
 plot_survey(M,which_survey=c(1,2))
 plot_agefits()
-
+plot_sel(M,styr=1990)
+plot_sel(M,styr=1990,type="survey")
+plot_sel
+	
 length(M)
 #=====================
 #   SSB 
