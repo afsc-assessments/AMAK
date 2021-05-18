@@ -3636,11 +3636,11 @@ REPORT_SECTION
       cum_NLL(iyr+1) = cum_NLL(iyr) ; 
 	}
   ofstream cum_like("cum_NLL.rep");
-	report<<"Cumulative likelihoods"<<endl;
+	leg_report<<"Cumulative likelihoods"<<endl;
 	for (int iyr=styr+1; iyr<=endyr;iyr++)
 	{
 		cum_like<< iyr<<" "<<cum_NLL(iyr)<<endl;
-		report<< iyr<<" "<<cum_NLL(iyr)<<endl;
+		leg_report<< iyr<<" "<<cum_NLL(iyr)<<endl;
 	}
   //----------------------------------------------------------
     if (!Popes)
@@ -3680,33 +3680,33 @@ REPORT_SECTION
   cout<<"||"<<endl<<"||"<<endl;
   cout <<"_______________________________________________________________"<<endl;
     adstring comma = adstring(","); 
-    report << model_name<<" "<< endl<< endl;
-    report << "Estimated annual F's " << endl;
+    leg_report << model_name<<" "<< endl<< endl;
+    leg_report << "Estimated annual F's " << endl;
     Fmort.initialize();
     for (k=1;k<=nfsh;k++)
       for (i=styr;i<=endyr;i++) 
         Fmort(i) += mean(F(k,i));
-    report << Fmort<<endl;
-    report << "Total mortality (Z)"<<endl;
-    report << Z<<endl;
-    report << "Estimated numbers of fish " << endl;
+    leg_report << Fmort<<endl;
+    leg_report << "Total mortality (Z)"<<endl;
+    leg_report << Z<<endl;
+    leg_report << "Estimated numbers of fish " << endl;
     for (i=styr;i<=endyr;i++) 
-      report <<"       Year: "<< i << " "<< natage(i) << endl;
-    report << endl<< "Estimated F mortality " << endl;
+      leg_report <<"       Year: "<< i << " "<< natage(i) << endl;
+    leg_report << endl<< "Estimated F mortality " << endl;
     for (k=1;k<=nfsh;k++)
     {
-      report << "Fishery "<< k <<" : "<< endl ;
+      leg_report << "Fishery "<< k <<" : "<< endl ;
       for (i=styr;i<=endyr;i++) 
-        report << "        Year: "<<i<<" "<<F(k,i)<<  " "<< endl;
+        leg_report << "        Year: "<<i<<" "<<F(k,i)<<  " "<< endl;
     }
 
-    report << endl<< "survey q " << endl;
-    report <<q_ind<<endl;
-    report << endl<< "Observed survey values " << endl;
+    leg_report << endl<< "survey q " << endl;
+    leg_report <<q_ind<<endl;
+    leg_report << endl<< "Observed survey values " << endl;
     for (k=1;k<=nind;k++)
     {
       int ii=1;
-      report <<endl<< "Yr_Obs_Pred_Survey "<< k <<" : "<< endl ;
+      leg_report <<endl<< "Yr_Obs_Pred_Survey "<< k <<" : "<< endl ;
       for (int iyr=styr;iyr<=endyr;iyr++)
       {
         dvariable pred_tmp ;
@@ -3716,114 +3716,114 @@ REPORT_SECTION
                         elem_prod(sel_ind(k,iyr) , wt_ind(k,iyr)),q_power_ind(k));
           if (yrs_ind(k,ii)==iyr)
           {
-            report << iyr<< " "<< 
+            leg_report << iyr<< " "<< 
                      obs_ind(k,ii) << " "<< pred_tmp <<endl;
             ii++;
           }
           else
-            report << iyr<< " -1 "<< " "<< pred_tmp   <<endl;
+            leg_report << iyr<< " -1 "<< " "<< pred_tmp   <<endl;
         }
       }
     }
 
-    report << endl<< "Survey_Q:  "<<q_ind << endl;
+    leg_report << endl<< "Survey_Q:  "<<q_ind << endl;
 
-    report << endl<< "Observed Prop " << endl;
+    leg_report << endl<< "Observed Prop " << endl;
     for (k=1;k<=nfsh;k++)
     {
-      report << "ObsFishery "<< k <<" : "<< endl ;
+      leg_report << "ObsFishery "<< k <<" : "<< endl ;
       for (i=1;i<=nyrs_fsh_age(k);i++) 
-        report << yrs_fsh_age(k,i)<< " "<< oac_fsh(k,i) << endl;
+        leg_report << yrs_fsh_age(k,i)<< " "<< oac_fsh(k,i) << endl;
     }
-    report << endl<< "Predicted prop  " << endl;
+    leg_report << endl<< "Predicted prop  " << endl;
     for (k=1;k<=nfsh;k++)
     {
-      report << "PredFishery "<< k <<" : "<< endl;
+      leg_report << "PredFishery "<< k <<" : "<< endl;
       for (i=1;i<=nyrs_fsh_age(k);i++) 
-        report << yrs_fsh_age(k,i)<< " "<< eac_fsh(k,i) << endl;
+        leg_report << yrs_fsh_age(k,i)<< " "<< eac_fsh(k,i) << endl;
     }
     for (k=1;k<=nfsh;k++)
     {
-      report << "Pobs_length_fishery_"<< (k) <<""<< endl;
+      leg_report << "Pobs_length_fishery_"<< (k) <<""<< endl;
       for (i=1;i<=nyrs_fsh_length(k);i++) 
-        report << yrs_fsh_length(k,i)<< " "<< olc_fsh(k,i) << endl;
-      report   << endl;
+        leg_report << yrs_fsh_length(k,i)<< " "<< olc_fsh(k,i) << endl;
+      leg_report   << endl;
     }
     for (k=1;k<=nfsh;k++)
     {
-      report << "Pred_length_fishery_"<< (k) <<""<< endl;
+      leg_report << "Pred_length_fishery_"<< (k) <<""<< endl;
       for (i=1;i<=nyrs_fsh_length(k);i++) 
-        report << yrs_fsh_length(k,i)<< " "<< elc_fsh(k,i) << endl;
-      report   << endl;
+        leg_report << yrs_fsh_length(k,i)<< " "<< elc_fsh(k,i) << endl;
+      leg_report   << endl;
     }
-    report << endl<< "Observed prop Survey" << endl;
+    leg_report << endl<< "Observed prop Survey" << endl;
     for (k=1;k<=nind;k++)
     {
-      report << "ObsSurvey "<<k<<" : "<<  endl;
+      leg_report << "ObsSurvey "<<k<<" : "<<  endl;
       for (i=1;i<=nyrs_ind_age(k);i++) 
-        report << yrs_ind_age(k,i)<< " "<< oac_ind(k,i) << endl;
+        leg_report << yrs_ind_age(k,i)<< " "<< oac_ind(k,i) << endl;
     }
-    report << endl<< "Predicted prop Survey" << endl;
+    leg_report << endl<< "Predicted prop Survey" << endl;
     for (k=1;k<=nind;k++)
     {
-      report << "PredSurvey "<<k<<" : "<<  endl;
+      leg_report << "PredSurvey "<<k<<" : "<<  endl;
       for (i=1;i<=nyrs_ind_age(k);i++) 
-        report << yrs_ind_age(k,i)<< " "<< eac_ind(k,i) << endl;
+        leg_report << yrs_ind_age(k,i)<< " "<< eac_ind(k,i) << endl;
     }
-    report << endl<< "Observed catch biomass " << endl;
-    report << catch_bio << endl;
-    report << "predicted catch biomass " << endl;
-    report << pred_catch << endl;
+    leg_report << endl<< "Observed catch biomass " << endl;
+    leg_report << catch_bio << endl;
+    leg_report << "predicted catch biomass " << endl;
+    leg_report << pred_catch << endl;
 
-    report << endl<< "Estimated annual fishing mortality " << endl;
+    leg_report << endl<< "Estimated annual fishing mortality " << endl;
     for (k=1;k<=nfsh;k++)
-      report << " Average_F_Fshry_"<<k<< " Full_selection_F_Fshry_"<<k;
+      leg_report << " Average_F_Fshry_"<<k<< " Full_selection_F_Fshry_"<<k;
 
-    report << endl;
+    leg_report << endl;
     for (i=styr;i<=endyr;i++)
     {
-      report<< i<< " ";
+      leg_report<< i<< " ";
       for (k=1;k<=nfsh;k++)
-        report<< mean(F(k,i)) <<" "<< mean(F(k,i))*max(sel_fsh(k,i)) << " ";
+        leg_report<< mean(F(k,i)) <<" "<< mean(F(k,i))*max(sel_fsh(k,i)) << " ";
 
-      report<< endl;
+      leg_report<< endl;
     }
-    report << endl<< "Selectivity" << endl;
+    leg_report << endl<< "Selectivity" << endl;
     for (k=1;k<=nfsh;k++)
       for (i=styr;i<=endyr;i++)
-        report << "Fishery "<< k <<"  "<< i<<" "<<sel_fsh(k,i) << endl;
+        leg_report << "Fishery "<< k <<"  "<< i<<" "<<sel_fsh(k,i) << endl;
     for (k=1;k<=nind;k++)
       for (i=styr;i<=endyr;i++)
-        report << "Survey  "<< k <<"  "<< i<<" "<<sel_ind(k,i) << endl;
+        leg_report << "Survey  "<< k <<"  "<< i<<" "<<sel_ind(k,i) << endl;
 
-    report << endl<< "Stock Recruitment stuff "<< endl;
+    leg_report << endl<< "Stock Recruitment stuff "<< endl;
     for (i=styr_rec;i<=endyr;i++)
       if (active(log_Rzero))
-        report << i<< " "<<Sp_Biom(i-rec_age)<< " "<< SRecruit(Sp_Biom(i-rec_age))<< " "<< mod_rec(i)<<endl;
+        leg_report << i<< " "<<Sp_Biom(i-rec_age)<< " "<< SRecruit(Sp_Biom(i-rec_age))<< " "<< mod_rec(i)<<endl;
       else 
-        report << i<< " "<<Sp_Biom(i-rec_age)<< " "<< " 999" << " "<< mod_rec(i)<<endl;
+        leg_report << i<< " "<<Sp_Biom(i-rec_age)<< " "<< " 999" << " "<< mod_rec(i)<<endl;
 
-    report << endl<< "Curve to plot "<< endl;
-    report <<"stock Recruitment"<<endl;
-    report <<"0 0 "<<endl;
+    leg_report << endl<< "Curve to plot "<< endl;
+    leg_report <<"stock Recruitment"<<endl;
+    leg_report <<"0 0 "<<endl;
     dvariable stock;
     for (i=1;i<=30;i++)
     {
       stock = double (i) * Bzero /25.;
       if (active(log_Rzero))
-        report << stock <<" "<< SRecruit(stock)<<endl;
+        leg_report << stock <<" "<< SRecruit(stock)<<endl;
       else
-        report << stock <<" 99 "<<endl;
+        leg_report << stock <<" 99 "<<endl;
     }
 
-    report   << endl<<"Likelihood Components" <<endl;
-    report   << "----------------------------------------- " <<endl;
-    report   << "  catch_like  age_like_fsh sel_like_fsh ind_like age_like_ind sel_like_ind rec_like fpen post_priors_indq post_priors residual total"<<endl;
-    report   << " "<<obj_comps<<endl;
+    leg_report   << endl<<"Likelihood Components" <<endl;
+    leg_report   << "----------------------------------------- " <<endl;
+    leg_report   << "  catch_like  age_like_fsh sel_like_fsh ind_like age_like_ind sel_like_ind rec_like fpen post_priors_indq post_priors residual total"<<endl;
+    leg_report   << " "<<obj_comps<<endl;
 
     obj_comps(13)= obj_fun - sum(obj_comps) ; // Residual 
     obj_comps(14)= obj_fun ;                  // Total
-    report   <<"  catch_like       "<<setw(10)<<obj_comps(1) <<endl
+    leg_report   <<"  catch_like       "<<setw(10)<<obj_comps(1) <<endl
              <<"  age_like_fsh     "<<setw(10)<<obj_comps(2) <<endl
              <<"  length_like_fsh  "<<setw(10)<<obj_comps(3) <<endl
              <<"  sel_like_fsh     "<<setw(10)<<obj_comps(4) <<endl
@@ -3838,78 +3838,78 @@ REPORT_SECTION
              <<"  residual         "<<setw(10)<<obj_comps(12)<<endl
              <<"  total            "<<setw(10)<<obj_comps(13)<<endl;
 
-    report   << endl;
-    report   << "Fit to Catch Biomass "<<endl;
-    report   << "-------------------------" <<endl;
+    leg_report   << endl;
+    leg_report   << "Fit to Catch Biomass "<<endl;
+    leg_report   << "-------------------------" <<endl;
     for (k=1;k<=nfsh;k++)
-      report << "  Catch_like_Fshry_#"<< k <<"  "<< catch_like(k) <<endl;
-    report   << endl;
+      leg_report << "  Catch_like_Fshry_#"<< k <<"  "<< catch_like(k) <<endl;
+    leg_report   << endl;
 
-    report << "Age likelihoods for fisheries :"<<endl;
-    report   << "-------------------------" <<endl;
+    leg_report << "Age likelihoods for fisheries :"<<endl;
+    leg_report   << "-------------------------" <<endl;
     for (k=1;k<=nfsh;k++)
-      report << "  Age_like_Fshry_#"<< k <<"  "<< age_like_fsh(k) <<endl;
-    report   << endl;
+      leg_report << "  Age_like_Fshry_#"<< k <<"  "<< age_like_fsh(k) <<endl;
+    leg_report   << endl;
 
-    report   << "Selectivity penalties for fisheries :"<<endl;
-    report   << "-------------------------" <<endl;
-    report   << "  Fishery Curvature_Age Change_Time Dome_Shaped"<<endl;
+    leg_report   << "Selectivity penalties for fisheries :"<<endl;
+    leg_report   << "-------------------------" <<endl;
+    leg_report   << "  Fishery Curvature_Age Change_Time Dome_Shaped"<<endl;
     for (k=1;k<=nfsh;k++)
-      report << "  Sel_Fshry_#"<< k <<"  "<< sel_like_fsh(k,1) <<" "<<sel_like_fsh(k,2)<<" "<<sel_like_fsh(k,3)<< endl;
-    report   << endl;
+      leg_report << "  Sel_Fshry_#"<< k <<"  "<< sel_like_fsh(k,1) <<" "<<sel_like_fsh(k,2)<<" "<<sel_like_fsh(k,3)<< endl;
+    leg_report   << endl;
   
-    report   << "survey Likelihood(s) " <<endl;
-    report   << "-------------------------" <<endl;
+    leg_report   << "survey Likelihood(s) " <<endl;
+    leg_report   << "-------------------------" <<endl;
     for (k=1;k<=nind;k++)
-      report << "  Survey_Index_#"<< k <<"  " << ind_like(k)<<endl;
-    report   << endl;
+      leg_report << "  Survey_Index_#"<< k <<"  " << ind_like(k)<<endl;
+    leg_report   << endl;
 
-    report << setw(10)<< setfixed() << setprecision(5) <<endl;
-    report   << "Age likelihoods for surveys :"<<endl;
-    report   << "-------------------------" <<endl;
+    leg_report << setw(10)<< setfixed() << setprecision(5) <<endl;
+    leg_report   << "Age likelihoods for surveys :"<<endl;
+    leg_report   << "-------------------------" <<endl;
     for (k=1;k<=nind;k++)
-      report << "  Age_Survey_#"<< k <<"  " << age_like_ind(k)<<endl;
-    report   << endl;
+      leg_report << "  Age_Survey_#"<< k <<"  " << age_like_ind(k)<<endl;
+    leg_report   << endl;
 
-    report   << "Selectivity penalties for surveys :"<<endl;
-    report   << "-------------------------" <<endl;
-    report   << "  Survey Curvature_Age Change_Time Dome_Shaped"<<endl;
+    leg_report   << "Selectivity penalties for surveys :"<<endl;
+    leg_report   << "-------------------------" <<endl;
+    leg_report   << "  Survey Curvature_Age Change_Time Dome_Shaped"<<endl;
     for (k=1;k<=nind;k++)
-      report << "  Sel_Survey_#"<< k <<"  "<< sel_like_ind(k,1) <<" "<<sel_like_ind(k,2)<<" "<<sel_like_ind(k,3)<< endl;
-    report   << endl;
+      leg_report << "  Sel_Survey_#"<< k <<"  "<< sel_like_ind(k,1) <<" "<<sel_like_ind(k,2)<<" "<<sel_like_ind(k,3)<< endl;
+    leg_report   << endl;
 
-    report << setw(10)<< setfixed() << setprecision(5) <<endl;
-    report   << "Recruitment penalties: " <<rec_like<<endl;
-    report   << "-------------------------" <<endl;
-    report   << "  (sigmar)            " <<sigmar<<endl;
-    report   << "  S-R_Curve           " <<rec_like(1)<< endl;
-    report   << "  Regularity          " <<rec_like(2)<< endl;
-    report   << "  Future_Recruits     " <<rec_like(3)<< endl;
-    report   << endl;
+    leg_report << setw(10)<< setfixed() << setprecision(5) <<endl;
+    leg_report   << "Recruitment penalties: " <<rec_like<<endl;
+    leg_report   << "-------------------------" <<endl;
+    leg_report   << "  (sigmar)            " <<sigmar<<endl;
+    leg_report   << "  S-R_Curve           " <<rec_like(1)<< endl;
+    leg_report   << "  Regularity          " <<rec_like(2)<< endl;
+    leg_report   << "  Future_Recruits     " <<rec_like(3)<< endl;
+    leg_report   << endl;
 
-    report   << "F penalties:          " <<endl;
-    report   << "-------------------------" <<endl;
-    report   << "  Avg_F               " <<fpen(1) <<endl;
-    report   << "  Effort_Variability  " <<fpen(2) <<endl;
-    report   << endl;
+    leg_report   << "F penalties:          " <<endl;
+    leg_report   << "-------------------------" <<endl;
+    leg_report   << "  Avg_F               " <<fpen(1) <<endl;
+    leg_report   << "  Effort_Variability  " <<fpen(2) <<endl;
+    leg_report   << endl;
 
-    report   << "Contribution of Priors:"<<endl;
-    report   << "-------------------------" <<endl;
-    report   << "Source                ";
-    report   <<           " Posterior";
-    report   <<           " Param_Val";
-    report   <<           " Prior_Val";
-    report   <<           "  CV_Prior"<<endl;
+    leg_report   << "Contribution of Priors:"<<endl;
+    leg_report   << "-------------------------" <<endl;
+    leg_report   << "Source                ";
+    leg_report   <<           " Posterior";
+    leg_report   <<           " Param_Val";
+    leg_report   <<           " Prior_Val";
+    leg_report   <<           "  CV_Prior"<<endl;
   // (*ad_printf)("f = %lf\n",value(f));
     for (k=1;k<=nind;k++)
     {
-      report << "Q_Survey_#"<< k <<"           "
+     leg_report << "Q_Survey_#"<< k <<"           "
              << setw(10)<<post_priors_indq(k) 
              << setw(10)<< q_ind(k)
              << setw(10)<< qprior(k)
              << setw(10)<< cvqprior(k)<<endl;
 
-      report << "Q_power_Survey_#"<< k <<"           "
+      leg_report << "Q_power_Survey_#"<< k <<"           "
              << setw(10)<<post_priors_indq(k) 
              << setw(10)<< q_power_ind(k)
              << setw(10)<< q_power_prior(k)
@@ -3918,73 +3918,73 @@ REPORT_SECTION
 
     // writerep(post_priors(1),repstring);
     // cout <<repstring<<endl;
-    report   << "Natural_Mortality     "
+    leg_report   << "Natural_Mortality     "
              << setw(10)<< post_priors(1)
              << setw(10)<< M
              << setw(10)<< natmortprior
              << setw(10)<< cvnatmortprior <<endl;
-    report   << "Steepness             "
+    leg_report   << "Steepness             "
              << setw(10)<< post_priors(2)
              << setw(10)<< steepness
              << setw(10)<< steepnessprior
              << setw(10)<< cvsteepnessprior <<endl;
-    report   << "SigmaR                "
+    leg_report   << "SigmaR                "
              << setw(10)<< post_priors(3)
              << setw(10)<< sigmar
              << setw(10)<< sigmarprior
              << setw(10)<< cvsigmarprior <<endl;
-    report   << endl;
-    report<<"Num_parameters_Estimated "<<initial_params::nvarcalc()<<endl;
+    leg_report   << endl;
+    leg_report<<"Num_parameters_Estimated "<<initial_params::nvarcalc()<<endl;
     
-  report <<cntrlfile_name<<endl;
-  report <<datafile_name<<endl;
-  report <<model_name<<endl;
+  leg_report <<cntrlfile_name<<endl;
+  leg_report <<datafile_name<<endl;
+  leg_report <<model_name<<endl;
   if (SrType==2) 
-    report<< "Beverton-Holt" <<endl;
+    leg_report<< "Beverton-Holt" <<endl;
   else
-    report<< "Ricker" <<endl;
-  report<<"Steepnessprior,_CV,_phase: " <<steepnessprior<<" "<<
+    leg_report<< "Ricker" <<endl;
+  leg_report<<"Steepnessprior,_CV,_phase: " <<steepnessprior<<" "<<
     cvsteepnessprior<<" "<<
     phase_srec<<" "<< endl;
 
-  report<<"sigmarprior,_CV,_phase: " <<sigmarprior<<" "<<  cvsigmarprior <<" "<<phase_sigmar<<endl;
+  leg_report<<"sigmarprior,_CV,_phase: " <<sigmarprior<<" "<<  cvsigmarprior <<" "<<phase_sigmar<<endl;
 
-  report<<"Rec_estimated_in_styr_endyr: " <<styr_rec    <<" "<<endyr        <<" "<<endl;
-  report<<"SR_Curve_fit__in_styr_endyr: " <<styr_rec_est<<" "<<endyr_rec_est<<" "<<endl;
-  report<<"Model_styr_endyr:            " <<styr        <<" "<<endyr        <<" "<<endl;
+  leg_report<<"Rec_estimated_in_styr_endyr: " <<styr_rec    <<" "<<endyr        <<" "<<endl;
+  leg_report<<"SR_Curve_fit__in_styr_endyr: " <<styr_rec_est<<" "<<endyr_rec_est<<" "<<endl;
+  leg_report<<"Model_styr_endyr:            " <<styr        <<" "<<endyr        <<" "<<endl;
 
-  report<<"M_prior,_CV,_phase "<< natmortprior<< " "<< cvnatmortprior<<" "<<phase_M<<endl;
-  report<<"qprior,_CV,_phase " <<qprior<<" "<<cvqprior<<" "<< phase_q<<endl;
-  report<<"q_power_prior,_CV,_phase " <<q_power_prior<<" "<<cvq_power_prior<<" "<< phase_q_power<<endl;
+  leg_report<<"M_prior,_CV,_phase "<< natmortprior<< " "<< cvnatmortprior<<" "<<phase_M<<endl;
+  leg_report<<"qprior,_CV,_phase " <<qprior<<" "<<cvqprior<<" "<< phase_q<<endl;
+  leg_report<<"q_power_prior,_CV,_phase " <<q_power_prior<<" "<<cvq_power_prior<<" "<< phase_q_power<<endl;
 
-  report<<"cv_catchbiomass: " <<cv_catchbiomass<<" "<<endl;
-  report<<"Projection_years "<< nproj_yrs<<endl;
+  leg_report<<"cv_catchbiomass: " <<cv_catchbiomass<<" "<<endl;
+  leg_report<<"Projection_years "<< nproj_yrs<<endl;
   for (k=1;k<=nfsh;k++)
-    report << "Fsh_sel_opt_fish: "<<k<<" "<<fsh_sel_opt(k)<<" "<<sel_change_in_fsh(k)<<endl;
+    leg_report << "Fsh_sel_opt_fish: "<<k<<" "<<fsh_sel_opt(k)<<" "<<sel_change_in_fsh(k)<<endl;
   for (k=1;k<=nind;k++)
-    report<<"Survey_Sel_Opt_Survey: " <<k<<" "<<(ind_sel_opt(k))<<endl;
+    leg_report<<"Survey_Sel_Opt_Survey: " <<k<<" "<<(ind_sel_opt(k))<<endl;
     
-  report <<"Phase_survey_Sel_Coffs: "<<phase_selcoff_ind<<endl; 
-  report <<"Fshry_Selages: " << nselages_in_fsh  <<endl;
-  report <<"Survy_Selages: " << nselages_in_ind <<endl;
-  report << "Phase_for_age-spec_fishery "<<phase_selcoff_fsh<<endl;
-  report << "Phase_for_logistic_fishery "<<phase_logist_fsh<<endl;
-  report << "Phase_for_dble_logistic_fishery "<<phase_dlogist_fsh<<endl;
-  report << "Phase_for_age-spec_survey  "<<phase_selcoff_ind<<endl;
-  report << "Phase_for_logistic_survey  "<<phase_logist_ind<<endl;
-  report << "Phase_for_dble_logistic_indy "<<phase_dlogist_ind<<endl;
+  leg_report <<"Phase_survey_Sel_Coffs: "<<phase_selcoff_ind<<endl; 
+  leg_report <<"Fshry_Selages: " << nselages_in_fsh  <<endl;
+  leg_report <<"Survy_Selages: " << nselages_in_ind <<endl;
+  leg_report << "Phase_for_age-spec_fishery "<<phase_selcoff_fsh<<endl;
+  leg_report << "Phase_for_logistic_fishery "<<phase_logist_fsh<<endl;
+  leg_report << "Phase_for_dble_logistic_fishery "<<phase_dlogist_fsh<<endl;
+  leg_report << "Phase_for_age-spec_survey  "<<phase_selcoff_ind<<endl;
+  leg_report << "Phase_for_logistic_survey  "<<phase_logist_ind<<endl;
+  leg_report << "Phase_for_dble_logistic_indy "<<phase_dlogist_ind<<endl;
 
   for (k=1; k<=nfsh;k++)
   {
-    report <<"Number_of_select_changes_fishery: "<<k<<" "<<n_sel_ch_fsh(k)<<endl;
-    report<<"Yrs_fsh_sel_change: "<<yrs_sel_ch_fsh(k)<<endl;
-    report << "sel_change_in: "<<sel_change_in_fsh(k) << endl;
+    leg_report <<"Number_of_select_changes_fishery: "<<k<<" "<<n_sel_ch_fsh(k)<<endl;
+    leg_report<<"Yrs_fsh_sel_change: "<<yrs_sel_ch_fsh(k)<<endl;
+    leg_report << "sel_change_in: "<<sel_change_in_fsh(k) << endl;
   }
   for (k=1; k<=nind;k++)
   {
-    report <<"Number_of_select_changes_survey: "<<k<<" "<<n_sel_ch_ind(k)<<endl;
-    report<<"Yrs_ind_sel_change: "<<yrs_sel_ch_ind(k)<<endl;
-    report << "sel_change_in: "<<sel_change_in_ind(k) << endl;
+    leg_report <<"Number_of_select_changes_survey: "<<k<<" "<<n_sel_ch_ind(k)<<endl;
+    leg_report<<"Yrs_ind_sel_change: "<<yrs_sel_ch_ind(k)<<endl;
+    leg_report << "sel_change_in: "<<sel_change_in_ind(k) << endl;
   }
 
 FUNCTION write_msy_out
@@ -4992,7 +4992,7 @@ FUNCTION Write_Datafile
   
 
 FUNCTION Write_R
-  ofstream R_report("For_R.rep");
+  ofstream R_report("amak.rep");
   for (k=1;k<=nfsh;k++)
   {
     R_report<< "$sel_p1_fsh_"<<k<<endl<<sel_p1_fsh(k)<<endl;
@@ -5852,6 +5852,7 @@ GLOBALS_SECTION
   //
 	#define log_param(object) if (active(object)) write_input_log << "# " #object "\n" << object << endl;
   ofstream write_input_log("input.log");
+  ofstream leg_report("legacy_report.rep"); // added this to move away from PBS modeling
   ofstream SIS_rep("SIS_out.rep");
 
  // void get_sel_changes(int& k);

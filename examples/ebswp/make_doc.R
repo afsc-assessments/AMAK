@@ -12,6 +12,9 @@ base <- readList("runs/base/For_R.rep")
 #modlyr   <- readList("2019_Final/For_R.rep")
 M <- list(base)
 names(M) <- c("base")
+pm <- read_admb("~/_mymods/ebswp/runs/base/pm")
+
+names(pm)
 
 plot_survey(M,which_survey=c(2),xlim=c(1990,2020))
 plot_survey(M,which_survey=c(5),xlim=c(1990,2020))
@@ -19,7 +22,10 @@ plot_survey(M,which_survey=c(1,2))
 plot_agefits()
 plot_sel(M,styr=1990)
 plot_sel(M,styr=1990,type="survey")
-plot_sel
+plot_mnage(M)
+plot_recruitment(M,xlim=c(1963, 2021))
+plot_ssb(M,xlim=c(1963, 2021))
+
 	
 length(M)
 #=====================
