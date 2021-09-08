@@ -17,7 +17,7 @@ $(EXEC): $(DIST)$(EXEC).tpl
 	ln -sf $(DIST)$(EXEC) $@
 
 $(DIST)$(EXEC).tpl:
-	$(MAKE) --directory=../../src
+	$(MAKE) --directory=../../../../src
 
 
 mpd: $(EXEC)
