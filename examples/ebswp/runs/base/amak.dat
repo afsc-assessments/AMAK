@@ -8,9 +8,9 @@ ebswp
 1 2 2 2 2 2 
 1 1 2 3 4 2
 #Sr_type 
-2
-#AgeError 
 1
+#AgeError 
+0
 #Retro 
 0
 # surv_dwnwt
@@ -21,9 +21,9 @@ ebswp
 -6
 
 #Steepness 
-0.7 0.2 -6
+0.7 0.1  6
 #SigmaR 
-0.6 0.05 -4
+0.67 0.05 -4
 #yrs_sr 
 1978 2017
 #Linf

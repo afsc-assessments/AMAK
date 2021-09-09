@@ -4993,6 +4993,33 @@ FUNCTION Write_Datafile
 
 FUNCTION Write_R
   ofstream R_report("amak.rep");
+		R_report<<"Fishery_names"<<endl;
+		for (i =1;i<=nfsh;i++)
+		  R_report<<fshname(i)<<":";
+		R_report<<endl;
+		R_report<<"Index_names"<<endl;
+		for (i =1;i<=nind;i++)
+		  R_report<<indname(i)<<":";
+		R_report<<endl;
+
+		R_report<<"dCatchData"<<endl;
+		for (i =1;i<=nfsh;i++)
+		  for (int iyr =styr;iyr<=endyr;iyr++)
+        R_report<<
+				iyr                                       <<" "<<
+				i                                         <<" "<<
+				catch_bio_in(i,iyr)                       <<" "<<
+				catch_bio_sd_in(i,iyr)                    <<" "<< endl;
+
+		R_report<<"dSurveyData"<<endl;
+		for (i =1;i<=nind;i++)
+		  for (j =1;j<=nyrs_ind(i);j++)
+        R_report<<
+				yrs_ind(i,j)                          <<" "<<
+				i                                     <<" "<<
+				obs_ind_in(i,j)                       <<" "<<
+				obs_se_ind_in(i,j)/obs_ind_in(i,j)    <<" "<< endl;
+
   for (k=1;k<=nfsh;k++)
   {
     R_report<< "$sel_p1_fsh_"<<k<<endl<<sel_p1_fsh(k)<<endl;
@@ -5664,6 +5691,24 @@ FUNCTION Write_R
     R_report<<i<<" "<<sumBiom(i)<<" "<<sumBiom.sd(i)<<" "<<lb<<" "<<ub<<endl;
   }
   R_Report(tau);      
+  R_report << "SRR"<< endl; //year, ssb, Rhat, Rest
+    for (i=styr_rec;i<=endyr;i++)
+      if (active(log_Rzero))
+        R_report << i<< " "<<Sp_Biom(i-rec_age)<< " "<< SRecruit(Sp_Biom(i-rec_age))<< " "<< mod_rec(i)<<endl;
+      else 
+        R_report << i<< " "<<Sp_Biom(i-rec_age)<< " "<< " 999" << " "<< mod_rec(i)<<endl;
+
+    R_report <<"SRR_curve"<<endl;
+    R_report <<"0 0 "<<endl;
+    for (i=1;i<=30;i++)
+    {
+      stock = double (i) * Bzero /25.;
+      if (active(log_Rzero))
+        R_report << stock <<" "<< SRecruit(stock)<<endl;
+      else
+        R_report << stock <<" 99 "<<endl;
+    }
+
 
   R_report.close();
 
