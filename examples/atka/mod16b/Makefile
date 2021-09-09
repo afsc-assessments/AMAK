@@ -1,8 +1,9 @@
 EXEC = amak
+PROJ = main
 ifeq ($(SAFE),TRUE)
-	DIST = ../../src/
+	DIST = ~/_mymods/afsc-assessments/AMAK/src/
 else
-	DIST = ../../src/
+	DIST = ~/_mymods/afsc-assessments/AMAK/src/
 endif
 ARGS = -nox -iprint 50 
 
@@ -15,20 +16,23 @@ endif
 all: mpd
 $(EXEC): $(DIST)$(EXEC).tpl
 	ln -sf $(DIST)$(EXEC) $@
+	ln -sf $(DIST)$(PROJ) $(PROJ)
 
 $(DIST)$(EXEC).tpl:
-	$(MAKE) --directory=../../src
-
+	$(MAKE) --directory=~/_mymods/AMAK/src
 
 mpd: $(EXEC)
 	./$(EXEC) $(ARGS)
 
-proj: $(EXEC)
-	#./$(EXEC) $(ARGS)
-	cp amak.prj proj/data/
-	cd proj
-	./main
+mcmc: $(EXEC)
+	./$(EXEC) $(ARGS) -mcmc 1000000 -mcsave 200
+	./$(EXEC) $(ARGS) -mceval
 
+retro: 
+	./runretro.sh    
+
+proj: $(PROJ)
+	./$(PROJ) 
 
 debug: $(EXEC)
 	./$(EXEC) $(ARGS)
