@@ -11,11 +11,11 @@
 #Retro 
   0 
  #surv_dwnwt 
- 0  
+ #0  
 #cv_inc
-100
+#100
 #n_comp
-0.01
+#0.01
 #Steepness 
 0.8  300  -6  
 #SigmaR 
