@@ -1,3 +1,4 @@
+radian
 rm(list=ls())
 ls()
 source("R/prelims.R")
@@ -5,20 +6,21 @@ source("R/prelims.R")
 #-------------------------------------------------------------------------------
 # Visual compare runs
 #-------------------------------------------------------------------------------
-library(ggridges)
-library(ggthemes)
 library(scales)
+library(viridis)
 
 source("R/compareRuns.r")
 
 #        Read in the output of the assessment
-modlyr   <- readList("2019_Final/For_R.rep")
-mod16.0b <- readList("mod16b/For_R.rep")
-mod20 <- readList("m20/For_R.rep")
-mod3par <- readList("dbl_log/For_R.rep")
-estM <- readList("estM/For_R.rep")
-lstOut1  <- list( "Non-parametric"= mod16.0b, "3-parameter double logistic"= mod3par, "est M" = estM)
-M <- lstOuts <- lstOut1 
+modlyr   <- readList("mod16b/For_R.rep")
+mod21    <- readList("mod2021/For_R.rep")
+mod20    <- readList("lastyr/For_R.rep")
+#mod3par <- readList("dbl_log/For_R.rep")
+#estM <- readList("estM/For_R.rep")
+lstOuts  <- list( "Last year"= modlyr, 
+                  "2020" = mod20,
+                  "2021"= mod21)
+M <- lstOuts 
 #tab       <- cbind(lstOuts[[1]]$Like_Comp_names,do.call(cbind,lapply(lstOuts,function(x){round(x[["Like_Comp"]],2)})))
 #tab       <- cbind(lstOuts[[1]]$,do.call(cbind,lapply(lstOuts,function(x){round(x[["Like_Comp"]],2)})))
 #tt <- tibble( srv_sdnr = lstOuts %>% map("sdnr_ind_1"),
@@ -26,66 +28,80 @@ M <- lstOuts <- lstOut1
   #srva_sdnr = lstOuts %>% map("sdnr_age_ind_1")
     #)
 #map_df(data.table(lstOut1),"[","sumbiom")
-caplyr <- "2019 assessment"
+caplyr <- "2020 assessment"
 captyr <- "Current assessment "
 
 #=====================
 #   SSB 
 #=====================
-df  <- data.table(Model = "16.0b", mod16.0b$SSB )
-df <- rbind(df, data.table(Model="lastyr",modlyr$SSB))
+df  <- data.frame(Model = "last year", modlyr$SSB )
+#df
+#df <- rbind(df, tibble(Model="2020",mod20$SSB))
+df <- rbind(df, data.frame(Model="2021",mod21$SSB))
 
-df  <- data.table(Model = "Non-parametric", mod16.0b$SSB )
-df <- rbind(df, data.table(Model="3-parameter",mod3par$SSB))
 # for (i in 2:3) df <- rbind(df, data.table(Model=paste0("Model ",i),lstOuts[[i]]$SSB))
 names(df) <- c("Model","yr","SSB","SE","lb","ub")
-bdf <- filter(df,yr>1980,yr<=2021) %>% arrange(yr);bdf
+bdf <- filter(df,yr>1980,yr<=2022) %>% arrange(yr);bdf
 
-p1 <- ggplot(data=bdf,aes(x=yr,y=SSB,alpha=0.3,color=Model)) + scale_y_continuous(limits=c(0,1000000)) + ylab("Spawning biomass") + 
-          xlab("Year") +  theme_few(base_size=19) + geom_line(data=bdf,aes(x=yr,y=SSB,color=Model)) +
+p1 <- ggplot(data=bdf,aes(x=yr,y=SSB,alpha=0.3,color=Model)) + scale_y_continuous(limits=c(0,500000)) + ylab("Spawning biomass") + 
+          xlab("Year") +  theme_few(base_size=19) + geom_line(data=bdf,aes(x=yr,y=SSB,color=Model)) + scale_fill_viridis(discrete=TRUE) +
           geom_ribbon(data=bdf ,aes(x=yr,y=SSB,ymin=lb,ymax=ub,fill=Model),alpha=.3)  + guides(alpha=FALSE,col=FALSE) ;p1
 p1
 #=====================
 #   Rec 
 #=====================
-rdf <- cbind(data.table(mod16.0b$R,"Model_16.0b"))
-rdf <- rbind(rdf,cbind(data.table(modlyr$R,"2019 Assessment")))
+rdf <- cbind(data.table(modlyr$R,"last year"))
+rdf <- rbind(rdf,cbind(data.table(mod21$R,"2021 Assessment")))
 names(rdf) <- c("yr","R","se","lb","ub","case")
-mytheme = mytheme + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5))
-rdf  <- rdf[yr>1990&yr<2020,.(yr,R=R,lb=lb,ub=ub,case)]
-mnR <- 580 #mean(mod16.0b$R)
+mytheme = theme_few(base_size=18) #mytheme + theme(axis.text.x = element_text(angle=90, hjust=1, vjust=.5))
+rdf  <- rdf[yr>1990&yr<2022,.(yr,R=R,lb=lb,ub=ub,case)]
+mnR <- mean(mod21$R)
 dodge <- position_dodge(width=0.8)
-ggplot(rdf,aes(x=yr-1,y=R,fill=case)) + xlab("Year class") + ylab("Age 1 recruits (thousands)") + #ylim(c(0,18000)) +
+ggplot(rdf,aes(x=yr-1,y=R,fill=case)) + xlab("Year class") + ylab("Age 1 recruits (thousands)") + 
        geom_bar(width=0.75,position="dodge",stat="identity",color="black") + 
-       scale_x_continuous(breaks=seq(1990,2018,2)) +
+       scale_x_continuous(breaks=seq(1990,2022,2)) +scale_fill_viridis(discrete=TRUE) +
        geom_errorbar(aes(ymin=lb,ymax=ub),width=.3,colour="blue",position=dodge) + mytheme + geom_hline(aes(yintercept=mnR))
+#ylim(c(0,18000)) +
 
 #=====================
 #    Fishing mortality
 #=====================
-     library(data.table)
-M <- mod16.0b
+library(data.table)
+M <- mod21
 fdf <- data.table(M$F_fsh_1)
 fdf$C_B <- M$Obs_catch_1/M$TotBiom[1:length(M$Obs_catch_1),2]
 names(fdf) <- c("Year","MeanF","F","C_B")
 fdf.m <-melt(fdf,id="Year",value="Estimate",variable="Type")
 fdf.m
-ggplot(fdf.m,aes(x=Year,y=Estimate,color=Type)) + xlab("Year") +  
-       geom_line(size=2.) + scale_x_continuous(breaks=seq(1977,2019,3)) + mytheme  
-       geom_hline(aes(yintercept=mnR),linetype="dashed") + theme(legend.position="none")
-
+p1 <- ggplot(fdf.m,aes(x=Year,y=Estimate,color=Type)) + xlab("Year") +  
+       geom_line(size=2.) + scale_x_continuous(breaks=seq(1977,2022,3)) + theme_few(base_size=18)  
+write_csv(p1$data, "F_by_yr.csv")
 
 #=====================
 # Fit to survey data
 #=====================
-AgeFitsSrv(mod16.0b,rec_age=1,case_label=captyr)
+ df <-tibble(M$Obs_Survey_1) 
+names(df) <- (c("Year","Estimate","Prediction","se","res1","res2"))
+ df %>% mutate(Year=as.numeric(Year),
+               Estimate=as.numeric(Estimate),
+               Model=as.numeric(Prediction),
+               se=as.numeric(se),
+               lb = exp(log(Estimate-(2*se))),
+               ub = exp(log(Estimate+se*2)) ) %>%
+ ggplot(aes(y=Model,x=Year,ymax=ub,ymin=lb)) + theme_few(base_size=18)+
+        scale_x_continuous(breaks=seq(1990,2021,2), limits=c(1990,2021)) +
+        geom_errorbar(size=.5) + ylab("Survey biomass (t)") + ggtitle("NMFS Aleutian Islands trawl survey") +
+        geom_line(color="blue",size=2) + geom_point(aes(y=Estimate),size=5,col="red")  
 
-mdf <- .get_bts_df(lstOut1[2])
+ names()
+AgeFitsSrv(mod21,rec_age=1,case_label=captyr)
+
+mdf <- .get_bts_df(lstOuts[2])
 mdf2 <- mdf %>% filter(!is.na(obs))
 ggplot(mdf,aes(x=year,y=pre)) + geom_line(width=2,color="blue") + .THEME + geom_point(data=mdf2,aes(x=year,y=obs),size=2,color="red") + expand_limits(y = 0) + 
                             geom_errorbar(data=mdf2,aes(x=year,ymax=ub,ymin=lb),width=.5) + ylab("Survey biomass (t)")+ xlab("Year") + 
                             scale_x_continuous(breaks=seq(1970,2019,2), limits=c(1990,2019)) 
-IndexFit(mod16.0b,yf=1990,yl=2019,f=1,main=captyr,ylab="Survey biomass (t)")
+IndexFit(mod21,yf=1990,yl=2019,f=1,main=captyr,ylab="Survey biomass (t)")
 AgeFitsSrv(modlyr,rec_age=1,case_label=caplyr)
 
 AgeFitsSrv(mod16.0b,rec_age=1,case_label="16.0b")
@@ -93,8 +109,7 @@ AgeFitsSrv(mod16.0b,rec_age=1,case_label="16.0b")
 #=====================
 # Fit to fishery data
 #=====================
-AgeFits(mod16.0b,rec_age=1,case_label=captyr)
-AgeFits(mod3par,rec_age=1,case_label=captyr)
+AgeFits(mod21,rec_age=1,case_label=captyr)
 #AgeFits(mod20,rec_age=1,case_label="Model 20.0")
 #AgeFits(modlyr,rec_age=1,case_label=caplyr)
 
@@ -111,16 +126,17 @@ dt[variable!="ub"&variable!="lb"] %>% ggplot(aes(x=Year,y=value,col=variable)) +
 #=====================
 #Selectivity
 #=====================
-tt <- data.frame(mod16.0b$sel_fsh_1[,3:13]) %>% mutate(mak = do.call(pmax, (.))) 
+tt <- data.frame(M$sel_fsh_1[,3:13]) %>% mutate(mak = do.call(pmax, (.))) 
 tt
-df <- data.frame(mod16.0b$sel_fsh_1[,2], mod16.0b$sel_fsh_1[,3:13] ) ; names(df) <- c("yr",1:11)
-df %>% mutate(max=max(c_across(2:12))) %>% mutate(2:12/max)
+df <- data.frame(M$sel_fsh_1[,2], M$sel_fsh_1[,3:13] ) ; names(df) <- c("yr",1:11)
+df %>% mutate(max=max(c_across(2:12))) #%>% mutate(2:12/max)
 
 df <- data.frame(mod3par$sel_fsh_1[,2:13] ); names(df) <- c("yr",1:11)
 df <- data.frame(mod3par$sel_fsh_1[,2:13] ); names(df) <- c("yr",1:11)
 df
 sdf <- gather(df,age,sel,2:12) %>% filter(yr>1976) %>% mutate(age=as.numeric(age)) #+ arrange(age,yr)
 max(sdf$sel )
+library(ggridges)
 ggplot(sdf,aes(x=age,y=as.factor(yr),height = sel)) + geom_density_ridges(stat = "identity",scale = 5.8, alpha = .9,color="blue",fill="yellow",size=.5)+ xlim(c(1,11))+ ylab("Year") + xlab("Age (years)") + scale_y_discrete(limits=rev(levels(as.factor(sdf$yr)))) + theme_few()
 #ggplot(sdf,aes(x=age,y=as.factor(yr),height = sel)) + geom_density_ridges(stat = "identity",scale = 5.8, alpha = .4,color="blue",fill="yellow",size=.5)+ xlim(c(1,11))+ mytheme + ylab("Year") + xlab("Age (years)") + scale_y_discrete(limits=rev(levels(as.factor(sdf$yr))))
 #ggplot(sdf,aes(x=age,y=as.factor(yr),height = sel)) + geom_density_ridges(stat = "identity",scale = 5.8, alpha = .4,color="black",fill="orange",size=.5)+ xlim(c(1,11))+ mytheme + ylab("Year") + xlab("Age (years)") + scale_y_discrete(limits=rev(levels(as.factor(sdf$yr))))
@@ -129,7 +145,7 @@ ggplot(sdf,aes(x=age,y=as.factor(yr),height = sel)) + geom_density_ridges(stat =
 #=====================
 # SRR
 #=====================
-M <- mod16.0b
+M <- mod21
 xlab="Spawning biomass"
 ylab="Recruits age 1 (thousands)"
 library(scales)
@@ -141,7 +157,7 @@ plt_srr <-function(M,xlab="Spawning biomass",ylab="Recruits",main="Model 16.0b")
   xlab(xlab) + ylab(ylab) + ggtitle("Atka mackerel")  + theme_few(base_size=16) + geom_line(data=df2,aes(x=stock, y=rec),col="salmon",size=2) + theme_few() + 
    scale_y_continuous(labels = comma) + scale_x_continuous(labels = comma) 
 }
-plt_srr(mod16.0b,main="Model 16.0b")
+plt_srr(mod20,main="Model 16.0b")
 
 #-------------------------------------------------------------------------------
 p.eff.n(mod16.0b,typ="F",f=1,main="Model")
@@ -172,7 +188,7 @@ srv_sel1$Model <-caplyr
 # Read in retro results
 for (i in 0:15) {
   #rn=paste0("mod16b/retro/r_",i,".rep")
-  rn=paste0("estM/retro/r_",i,".rep")
+  rn=paste0("mod2021/retro/r_",i,".rep")
   #rn=paste0("dbl_log/retro/r_",i,".rep")
   mn=paste0("retro",i)
   assign(mn,readList(rn))
@@ -180,7 +196,7 @@ for (i in 0:15) {
 }
 retouts <- list()
 retouts <- list( R0=retro0, R1= retro1, R2= retro2, R3= retro3, R4= retro4 , R5= retro5 , R6= retro6 , R7= retro7 , R8= retro8 , R9= retro9 , R10= retro10 )  
-df  <- data.table(Model = "estM", estM$SSB )
+df  <- data.frame(Model = "Current", mod21$SSB )
 df  <- data.table(Model = "3par", mod3par$SSB )
 df  <- data.table(Model = "Non-parametric", mod16.0b$SSB )
 names(df) <- c("Model","yr","SSB","SE","lb","ub")
@@ -189,11 +205,11 @@ bdf
 ssb <- bdf %>% transmute(SSB)
 ssb
 mytheme = mytheme + theme(axis.text.x = element_text(angle=0, hjust=0.5, vjust=0))
-p1 <- ggplot() + scale_y_continuous(limits=c(0,530000)) + ylab("Spawning biomass (t)") + xlab("Year") +  mytheme + geom_line(data=bdf,aes(x=yr,y=SSB),size=4) +
-        scale_y_continuous(labels = comma) +
-           geom_ribbon(data=bdf ,aes(x=yr,ymin=lb,ymax=ub),fill="gold",col="grey",alpha=.6)  + guides(fill=FALSE,alpha=FALSE,col=FALSE) + scale_x_continuous(breaks=seq(1978,2020,2)) 
-           p1
-           i=8
+p1 <- ggplot() + scale_y_continuous(labels=comma,limits=c(0,530000)) + ylab("Spawning biomass (t)") + xlab("Year") +  
+       mytheme + geom_line(data=bdf,aes(x=yr,y=SSB),size=3) +
+      geom_ribbon(data=bdf ,aes(x=yr,ymin=lb,ymax=ub),fill="gold",col="grey",alpha=.6)  + 
+      guides(fill=FALSE,alpha=FALSE,col=FALSE) + scale_x_continuous(breaks=seq(1978,2022,2)) 
+      p1
 for (i in 1:10) {
   rn=paste("retro",i,sep="");
   tdf <- data.frame(get(rn)$SSB); names(tdf) <- c("yr","SSB","SE","lb","ub"); tdf <- filter(tdf,yr>1977)
@@ -659,11 +675,17 @@ sdf <- rbind(sdf,tibble(read.table("mod16b/mceval_srv.dat"),mod="Non-parametric"
 sdf <- rbind(sdf,tibble(read.table("estM/mceval_srv.dat"),mod="3par, est. M"))
 names(sdf)<- c("Year","obs","mean","sim","draw","var","mod")
 head(sdf)
+# How I read Oleary et al 2018
 sdf %>% group_by(Year,mod) %>%
       summarise(mean_sim=mean(sim),var_sim=var(sim),
         ppl=mean(-log(
         exp(log(obs/mean_sim))^2 / (2*var_sim))  /
         obs*sqrt(var_sim) )) %>% ungroup() %>% group_by(mod) %>%summarize(sum(ppl))
+# How I read Hooten and Hobbs:
+sdf %>% group_by(Year,mod) %>%
+        summarise(mean_sim=mean(log(sim)),var_sim=var(log(sim)),
+        ppl=sum( (log(obs)-mean_sim)^2 + var_sim) ) %>%
+        ungroup() %>% group_by(mod) %>%summarize(sum(ppl))
 
 sdf2 <- sdf %>% filter(draw==1)
 ggplot(sdf2,aes(x=Year,y=obs)) + 
@@ -672,7 +694,8 @@ ggplot(sdf2,aes(x=Year,y=obs)) +
    scale_y_continuous(breaks=seq(0,1.5e6,by=5e5),limits=c(0,1.5e6))  +
    scale_x_continuous(breaks=seq(1990,2020,by=2))  +
    theme_few() + ylab("Survey estimates") +
-    geom_line(size=2,color="salmon") + geom_point(size=4,color="red",shape=3)
+    geom_line(size=2,color="salmon") + geom_point(size=4,color="red",shape=3) +
+    facet_grid(mod~.)
     ggsave("estM.png")
 head(sdf)
 
