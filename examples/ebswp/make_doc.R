@@ -8,12 +8,21 @@ setwd("..")
 source("R/prelims.R")
 #source("R/compareRuns.r")
 #        Read in the output of the assessment
-base <- readList("runs/base/For_R.rep")
+#base <- readList("runs/base/For_R.rep")
+base <- read_admb("runs/base/amak")
+A<-base
+
+names(base)
+base$run_name
+base$fit
+names(base$fit)
 #modlyr   <- readList("2019_Final/For_R.rep")
-M <- list(base)
-names(M) <- c("base")
 pm <- read_admb("~/_mymods/ebswp/runs/base/pm")
 
+M <- list(base,pm)
+M <- list(base)
+names(M) <- c("AMAK")
+names(M) <- c("AMAK","Pollock Model")
 names(pm)
 
 plot_survey(M,which_survey=c(2),xlim=c(1990,2020))
@@ -23,8 +32,9 @@ plot_agefits()
 plot_sel(M,styr=1990)
 plot_sel(M,styr=1990,type="survey")
 plot_mnage(M)
-plot_recruitment(M,xlim=c(1963, 2021))
+plot_recruitment(M,xlim=c(1989.5, 2021.5))
 plot_ssb(M,xlim=c(1963, 2021))
+plot_srr(M)
 
 	
 length(M)
