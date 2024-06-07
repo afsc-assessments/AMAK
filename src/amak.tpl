@@ -1287,7 +1287,7 @@ PARAMETER_SECTION
  // Fishing mortality parameters
   // init_vector         log_avg_fmort(1,nfsh,phase_fmort)
   // init_bounded_matrix fmort_dev(1,nfsh,styr,endyr,-15,15.,phase_fmort)
-  init_bounded_matrix fmort(1,nfsh,styr,endyr,0.00,15.,phase_fmort)
+  init_bounded_matrix fmort(1,nfsh,styr,endyr,0.00,3.,phase_fmort)
   vector Fmort(styr,endyr);  // Annual total Fmort
   number hrate
   number catch_tmp
@@ -2443,13 +2443,17 @@ FUNCTION Rec_Like
       dvariable SSQRec;
       SSQRec.initialize();
       dvar_vector chi(styr_rec_est,endyr_rec_est);
-      chi = log(mod_rec(styr_rec_est,endyr_rec_est)) - log(pred_rec(styr_rec_est,endyr_rec_est));
+    // JNI should add bias correction thing here...
+      // old way: chi = log(mod_rec(styr_rec_est,endyr_rec_est)) - log(pred_rec(styr_rec_est,endyr_rec_est));
+      chi = log(mod_rec(styr_rec_est,endyr_rec_est)) - log(pred_rec(styr_rec_est,endyr_rec_est)) + sigmarsq/2;
       SSQRec   = norm2( chi ) ;
       m_sigmarsq =  SSQRec/nrecs_est;
       m_sigmar   =  sqrt(m_sigmarsq);
 
       if (current_phase()>4||last_phase())
-        rec_like(1) = (SSQRec+ m_sigmarsq/2.)/(2*sigmarsq) + nrecs_est*log_sigmar; 
+        rec_like(1) = SSQRec/(2*sigmarsq) + nrecs_est*log_sigmar; 
+				// JNI note that the m_sigmarsq not sigmarsq???
+        // rec_like(1) = (SSQRec+ m_sigmarsq/2.)/(2*sigmarsq) + nrecs_est*log_sigmar; 
       else
         rec_like(1) = .1*(SSQRec+ m_sigmarsq/2.)/(2*sigmarsq) + nrecs_est*log_sigmar; 
     }
@@ -4993,16 +4997,16 @@ FUNCTION Write_Datafile
 
 FUNCTION Write_R
   ofstream R_report("amak.rep");
-		R_report<<"Fishery_names"<<endl;
+		leg_report<<"$Fishery_names"<<endl;
 		for (i =1;i<=nfsh;i++)
-		  R_report<<fshname(i)<<":";
-		R_report<<endl;
-		R_report<<"Index_names"<<endl;
+		  leg_report<<fshname(i)<<":";
+		leg_report<<endl;
+		leg_report<<"$Index_names"<<endl;
 		for (i =1;i<=nind;i++)
-		  R_report<<indname(i)<<":";
-		R_report<<endl;
+		  leg_report<<indname(i)<<":";
+		leg_report<<endl;
 
-		R_report<<"dCatchData"<<endl;
+		R_report<<"$dCatchData"<<endl;
 		for (i =1;i<=nfsh;i++)
 		  for (int iyr =styr;iyr<=endyr;iyr++)
         R_report<<
@@ -5011,7 +5015,7 @@ FUNCTION Write_R
 				catch_bio_in(i,iyr)                       <<" "<<
 				catch_bio_sd_in(i,iyr)                    <<" "<< endl;
 
-		R_report<<"dSurveyData"<<endl;
+		R_report<<"$dSurveyData"<<endl;
 		for (i =1;i<=nind;i++)
 		  for (j =1;j<=nyrs_ind(i);j++)
         R_report<<
@@ -5112,14 +5116,12 @@ FUNCTION Write_R
     R_report << "$N"<<endl;
     for (i=styr;i<=endyr;i++) 
       R_report <<   i << " "<< natage(i) << endl;
-      R_report   << endl;
 
     for (k=1;k<=nfsh;k++)
     {
       R_report << "$F_age_"<< (k) <<""<< endl ;
       for (i=styr;i<=endyr;i++) 
         R_report <<i<<" "<<F(k,i)<<" "<< endl;
-        R_report   << endl;
     }
 
     R_report <<endl<< "$Fshry_names"<< endl;
@@ -5135,7 +5137,7 @@ FUNCTION Write_R
       int ii=1;
 			double qtmp;
 			qtmp = value(q_ind(k,1));
-      R_report <<endl<< "$Obs_Survey_"<< k <<""<< endl ;
+      R_report << "$Obs_Survey_"<< k <<""<< endl ;
       for (i=styr;i<=endyr;i++)
       {
         if (ii<=yrs_ind(k).indexmax())
@@ -5157,7 +5159,7 @@ FUNCTION Write_R
              int iyr=i; 
              double predtmp = value(qtmp * pow(elem_prod(natage(iyr),pow(S(iyr),ind_month_frac(k))) * 
                               elem_prod(sel_ind(k,iyr) , wt_ind(k,iyr)),q_power_ind(k)) );
-            R_report << i<< " NA "<< " "<< predtmp <<" NA NA NA"<<endl;
+            R_report << i<< " -9 "<< " "<< predtmp <<" -9 -9 -9"<<endl;
           }
         }
         else
@@ -5165,14 +5167,12 @@ FUNCTION Write_R
           int iyr=i; 
           double predtmp = value(qtmp * pow(elem_prod(natage(iyr),pow(S(iyr),ind_month_frac(k))) * 
                             elem_prod(sel_ind(k,iyr) , wt_ind(k,iyr)),q_power_ind(k)) );
-          R_report << i<< " NA "<< " "<< predtmp <<" NA NA NA"<<endl;
+          R_report << i<< " -9 "<< " "<< predtmp <<" -9 -9 -9"<<endl;
         }
       }
-      R_report   << endl;
-      R_report << endl<< "$Index_Q_"<<k<<endl;
+      R_report << "$Index_Q_"<<k<<endl;
       R_report<< q_ind(k) << endl;
     }
-    R_report   << endl;
     for (k=1;k<=nfsh;k++)
     {
       if (nyrs_fsh_age(k)>0) 
@@ -5180,8 +5180,6 @@ FUNCTION Write_R
         R_report << "$pobs_fsh_"<< (k) <<""<< endl;
         for (i=1;i<=nyrs_fsh_age(k);i++) 
           R_report << yrs_fsh_age(k,i)<< " "<< oac_fsh(k,i) << endl;
-        R_report   << endl;
-
         R_report << "$phat_fsh_"<< (k) <<""<< endl;
         for (i=1;i<=nyrs_fsh_age(k);i++) 
           R_report << yrs_fsh_age(k,i)<< " "<< eac_fsh(k,i) << endl;
@@ -5190,24 +5188,20 @@ FUNCTION Write_R
         R_report << "$sdnr_age_fsh_"<< (k) <<""<< endl;
         for (i=1;i<=nyrs_fsh_age(k);i++) 
           R_report << yrs_fsh_age(k,i)<< " "<< sdnr( eac_fsh(k,i),oac_fsh(k,i),n_sample_fsh_age(k,i)) << endl;
-        R_report   << endl;
       }
       if (nyrs_fsh_length(k)>0) 
       { 
         R_report << "$pobs_len_fsh_"<< (k) <<""<< endl;
         for (i=1;i<=nyrs_fsh_length(k);i++) 
           R_report << yrs_fsh_length(k,i)<< " "<< olc_fsh(k,i) << endl;
-        R_report   << endl;
 
         R_report << "$phat_len_fsh_"<< (k) <<""<< endl;
         for (i=1;i<=nyrs_fsh_length(k);i++) 
           R_report << yrs_fsh_length(k,i)<< " "<< elc_fsh(k,i) << endl;
-        R_report   << endl;
 
         R_report << "$sdnr_length_fsh_"<< (k) <<""<< endl;
         for (i=1;i<=nyrs_fsh_length(k);i++) 
           R_report << yrs_fsh_length(k,i)<< " "<< sdnr( elc_fsh(k,i),olc_fsh(k,i),n_sample_fsh_length(k,i)) << endl;
-        R_report   << endl;
       }
     }
     for (k=1;k<=nind;k++)
@@ -5217,32 +5211,26 @@ FUNCTION Write_R
         R_report << "$pobs_ind_"<<(k)<<""<<  endl;
         for (i=1;i<=nyrs_ind_age(k);i++) 
           R_report << yrs_ind_age(k,i)<< " "<< oac_ind(k,i) << endl;
-        R_report   << endl;
         
         R_report << "$phat_ind_"<<(k)<<""<<  endl;
         for (i=1;i<=nyrs_ind_age(k);i++) 
           R_report << yrs_ind_age(k,i)<< " "<< eac_ind(k,i) << endl;
-        R_report   << endl;
 
         R_report << "$sdnr_age_ind_"<< (k) <<""<< endl;
         for (i=1;i<=nyrs_ind_age(k);i++) 
           R_report << yrs_ind_age(k,i)<< " "<< sdnr( eac_ind(k,i),oac_ind(k,i),n_sample_ind_age(k,i)) << endl;
-        R_report   << endl;
       }
       if (nyrs_ind_length(k)>0) 
       { 
         R_report << "$pobs_len_ind_"<< (k) <<""<< endl;
         for (i=1;i<=nyrs_ind_length(k);i++) 
           R_report << yrs_ind_length(k,i)<< " "<< olc_ind(k,i) << endl;
-        R_report   << endl;
         R_report << "$phat_len_ind_"<< (k) <<""<< endl;
         for (i=1;i<=nyrs_ind_length(k);i++) 
           R_report << yrs_ind_length(k,i)<< " "<< elc_ind(k,i) << endl;
-        R_report   << endl;
         R_report << "$sdnr_length_ind_"<< (k) <<""<< endl;
         for (i=1;i<=nyrs_ind_length(k);i++) 
           R_report << yrs_ind_length(k,i)<< " "<< sdnr( eac_ind(k,i),oac_ind(k,i),n_sample_ind_length(k,i)) << endl;
-        R_report   << endl;
 
       } 
     }
@@ -5253,12 +5241,10 @@ FUNCTION Write_R
 		}
     for (k=1;k<=nfsh;k++)
     {
-      R_report << endl<< "$Obs_catch_"<<(k) << endl;
+      R_report << "$Obs_catch_"<<(k) << endl;
       R_report << catch_bio(k) << endl;
-      R_report   << endl;
       R_report << "$Pred_catch_" <<(k) << endl;
       R_report << pred_catch(k) << endl;
-      R_report   << endl;
     }
 
     for (k=1;k<=nfsh;k++)
@@ -5277,7 +5263,6 @@ FUNCTION Write_R
       R_report << endl<< "$sel_fsh_"<<(k)<<"" << endl;
       for (i=styr;i<=endyr;i++)
         R_report << k <<"  "<< i<<" "<<sel_fsh(k,i) << endl; 
-      R_report   << endl;
     }
 
     for (k=1;k<=nind;k++)
@@ -5285,7 +5270,6 @@ FUNCTION Write_R
       R_report << endl<< "$sel_ind_"<<(k)<<"" << endl;
       for (i=styr;i<=endyr;i++)
         R_report << k <<"  "<< i<<" "<<sel_ind(k,i) << endl;
-        R_report << endl;
 
     }
     R_report << endl<< "$Stock_Rec"<< endl;
@@ -5294,8 +5278,6 @@ FUNCTION Write_R
         R_report << i<< " "<<Sp_Biom(i-rec_age)<< " "<< SRecruit(Sp_Biom(i-rec_age))<< " "<< mod_rec(i)<<endl;
       else 
         R_report << i<< " "<<Sp_Biom(i-rec_age)<< " "<< " 999" << " "<< mod_rec(i)<<endl;
-        
-        R_report   << endl;
 
     R_report <<"$stock_Rec_Curve"<<endl;
     R_report <<"0 0"<<endl;
@@ -5308,13 +5290,11 @@ FUNCTION Write_R
       else
         R_report << stock <<" 99 "<<endl;
     }
-    R_report   << endl;
 
     R_report   << endl<<"$Like_Comp" <<endl;
     obj_comps(13)= obj_fun - sum(obj_comps) ; // Residual 
     obj_comps(14)= obj_fun ;                  // Total
     R_report   <<obj_comps<<endl;
-    R_report   << endl;
     R_report   << endl<<"$Like_Comp_names" <<endl;
     R_report   <<"catch_like     "<<endl
              <<"age_like_fsh     "<<endl
@@ -5337,20 +5317,17 @@ FUNCTION Write_R
       R_report << "$Age_Fishery_"<< (k) <<"" <<endl;
       R_report << age_like_fsh(k)<<endl;
     }
-    R_report   << endl;
     for (k=1;k<=nfsh;k++)
     {
       R_report << "$Sel_Fshry_"<< (k) <<""<<endl;
       R_report << sel_like_fsh(k) << endl;
     }
-    R_report   << endl;
   
     for (k=1;k<=nind;k++)
     {
       R_report << "$Survey_Index_"<< (k) <<"" <<endl;
       R_report<< ind_like(k)<<endl;
     }
-    R_report   << endl;
 
     R_report << setw(10)<< setfixed() << setprecision(5) <<endl;
     for (k=1;k<=nind;k++)
@@ -5358,24 +5335,20 @@ FUNCTION Write_R
       R_report << "$Age_Survey_"<< (k) <<"" <<endl;
       R_report << age_like_ind(k)<<endl;
     }
-    R_report   << endl;
 
     for (k=1;k<=nind;k++)
     {
       R_report << "$Sel_Survey_"<< (k) <<""<<endl;
       R_report<< sel_like_ind(k,1) <<" "<<sel_like_ind(k,2)<<" "<<sel_like_ind(k,3)<< endl;
     }
-    R_report   << endl;
 
     R_report << setw(10)<< setfixed() << setprecision(5) <<endl;
     R_report   << "$Rec_Pen" <<endl<<sigmar<<"  "<<rec_like<<endl;
-    R_report   << endl;
     R_Report(m_sigmar);
     R_Report(sigmar);
 
     R_report   << "$F_Pen" <<endl;
     R_report<<fpen(1)<<"  "<<fpen(2)<<endl;
-    R_report   << endl;
     for (k=1;k<=nind;k++)
     {
       R_report << "$Q_Survey_"<< (k) <<""<<endl
@@ -5389,103 +5362,78 @@ FUNCTION Write_R
              << " "<< q_power_prior(k)
              << " "<< cvq_power_prior(k)<<endl;
     }
-             R_report   << endl;
     R_report << "$Mest"<<endl;
     R_report << " "<< post_priors(1)
              << " "<< Mest
              << " "<< natmortprior
              << " "<< cvnatmortprior <<endl;
-    R_report   << endl;
     R_report << "$Steep"<<endl;
     R_report << " "<< post_priors(2)
              << " "<< steepness
              << " "<< steepnessprior
              << " "<< cvsteepnessprior <<endl;
-    R_report   << endl;
     R_report << "$Sigmar"<<endl;
     R_report << " "<< post_priors(3)
              << " "<< sigmar
              << " "<< sigmarprior
              << " "<< cvsigmarprior <<endl;
-    R_report   << endl;
     R_report<<"$Num_parameters_Est"<<endl;
     R_report<<initial_params::nvarcalc()<<endl;
-    R_report   << endl;
     
   R_report<<"$Steep_Prior" <<endl;
   R_report<<steepnessprior<<" "<<
     cvsteepnessprior<<" "<<
     phase_srec<<" "<< endl;
-    R_report   << endl;
 
   R_report<<"$sigmarPrior " <<endl;
   R_report<<sigmarprior<<" "<<  cvsigmarprior <<" "<<phase_sigmar<<endl;
-  R_report   << endl;
 
   R_report<<"$Rec_estimated_in_styr_endyr " <<endl;
   R_report<<styr_rec    <<" "<<endyr        <<" "<<endl;
-  R_report   << endl;
   R_report<<"$SR_Curve_fit__in_styr_endyr " <<endl;
   R_report<<styr_rec_est<<" "<<endyr_rec_est<<" "<<endl;
-  R_report   << endl;
   R_report<<"$Model_styr_endyr" <<endl;
   R_report<<styr        <<" "<<endyr        <<" "<<endl;
-  R_report   << endl;
 
   R_report<<"$M_prior "<<endl;
   R_report<< natmortprior<< " "<< cvnatmortprior<<" "<<phase_M<<endl;
-  R_report   << endl;
   R_report<<"$qprior " <<endl;
   R_report<< qprior<<" "<<cvqprior<<" "<< phase_q<<endl;
   R_report<<"$q_power_prior " <<endl;
   R_report<< q_power_prior<<" "<<cvq_power_prior<<" "<< phase_q_power<<endl;
-  R_report   << endl;
 
   R_report<<"$cv_catchbiomass " <<endl;
   R_report<<cv_catchbiomass<<" "<<endl;
-  R_report   << endl;
   R_report<<"$Projection_years"<<endl;
   R_report<< nproj_yrs<<endl;
-  R_report   << endl;
   
   R_report << "$Fsh_sel_opt_fish "<<endl;
   for (k=1;k<=nfsh;k++)
     R_report<<k<<" "<<fsh_sel_opt(k)<<" "<<sel_change_in_fsh(k)<<endl;
-    R_report   << endl;
    R_report<<"$Survey_Sel_Opt_Survey " <<endl;
   for (k=1;k<=nind;k++)
   R_report<<k<<" "<<(ind_sel_opt(k))<<endl;
-  R_report   << endl;
     
   R_report <<"$Phase_survey_Sel_Coffs "<<endl;
   R_report <<phase_selcoff_ind<<endl;
-  R_report   << endl;
   R_report <<"$Fshry_Selages " << endl;
   R_report << nselages_in_fsh  <<endl;
-  R_report   << endl;
   R_report <<"$Survy_Selages " <<endl;
   R_report <<nselages_in_ind <<endl;
-  R_report   << endl;
 
   R_report << "$Phase_for_age_spec_fishery"<<endl;
   R_report <<phase_selcoff_fsh<<endl;
-  R_report   << endl;
   R_report << "$Phase_for_logistic_fishery"<<endl;
   R_report <<phase_logist_fsh<<endl;
-  R_report   << endl;
   R_report << "$Phase_for_dble_logistic_fishery "<<endl;
   R_report <<phase_dlogist_fsh<<endl;
-  R_report   << endl;
 
   R_report << "$Phase_for_age_spec_survey  "<<endl;
   R_report <<phase_selcoff_ind<<endl;
-  R_report   << endl;
   R_report << "$Phase_for_logistic_survey  "<<endl;
   R_report <<phase_logist_ind<<endl;
-  R_report   << endl;
   R_report << "$Phase_for_dble_logistic_indy "<<endl;
   R_report <<phase_dlogist_ind<<endl;
-  R_report   << endl;
   
   for (k=1;k<=nfsh;k++)
   {
@@ -5691,14 +5639,14 @@ FUNCTION Write_R
     R_report<<i<<" "<<sumBiom(i)<<" "<<sumBiom.sd(i)<<" "<<lb<<" "<<ub<<endl;
   }
   R_Report(tau);      
-  R_report << "SRR"<< endl; //year, ssb, Rhat, Rest
+  R_report << "$SRR"<< endl; //year, ssb, Rhat, Rest
     for (i=styr_rec;i<=endyr;i++)
       if (active(log_Rzero))
         R_report << i<< " "<<Sp_Biom(i-rec_age)<< " "<< SRecruit(Sp_Biom(i-rec_age))<< " "<< mod_rec(i)<<endl;
       else 
         R_report << i<< " "<<Sp_Biom(i-rec_age)<< " "<< " 999" << " "<< mod_rec(i)<<endl;
 
-    R_report <<"SRR_curve"<<endl;
+    R_report <<"$SRR_curve"<<endl;
     R_report <<"0 0 "<<endl;
     for (i=1;i<=30;i++)
     {

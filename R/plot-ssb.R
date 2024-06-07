@@ -67,7 +67,7 @@ plot_ssb <- function(M, xlab = "Year", ylab = "Female spawning biomass (kt)",
             geom_ribbon(aes(x = year, ymax = ub, ymin = lb), alpha = alpha,fill="salmon")
     } else {
         p <- p + geom_line(aes(x = year, y = ssb, col = Model), size=1.2 ) +
-            geom_ribbon(aes(x = year, ymax = ub, ymin = lb, fill = Model), alpha = alpha) 
+            geom_ribbon(aes(x = year, ymax = ub, ymin = lb, fill = Model), alpha = alpha) +
             scale_x_continuous(limits=xlim, breaks = seq(round(xlim[1],0),round(xlim[2],0), by = 5) ) 
     }
     
